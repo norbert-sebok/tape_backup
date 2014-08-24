@@ -10,12 +10,7 @@ from PySide import QtCore, QtGui
 import requests
 
 # Local application/library specific imports
-
-# -----------------------------------------------------------------------------
-# DATA
-
-API_URL = "http://127.0.0.1:5000"
-LOGO_PATH = "images/logo.png"
+import config
 
 # -----------------------------------------------------------------------------
 # WINDOWS
@@ -32,7 +27,7 @@ class ConnectingWindow(QtGui.QMainWindow):
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
 
-        pixmap = QtGui.QPixmap(LOGO_PATH)
+        pixmap = QtGui.QPixmap(config.LOGO_PATH)
         label = QtGui.QLabel()
         label.setPixmap(pixmap)
         label.setAlignment(QtCore.Qt.AlignCenter)
@@ -77,7 +72,7 @@ class MainWindow(QtGui.QMainWindow):
 
 
 def post(route, data):
-    url = '{}/{}'.format(API_URL, route)
+    url = '{}/{}'.format(config.API_URL, route)
     json_data = json.dumps(data)
     headers = {'content-type': 'application/json'}
 
