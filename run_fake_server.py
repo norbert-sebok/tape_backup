@@ -30,6 +30,19 @@ def check_version():
     return json.dumps(result)
 
 
+@app.route("/log_in", methods=['POST'])
+def log_in():
+    username = flask.request.json['username']
+    password = flask.request.json['password']
+
+    if username == 'somebody' and password == 'secret':
+        result = {'token': 'A_VALID_TOKEN'}
+    else:
+        result = {'error': 'Invalid username or password'}
+
+    return json.dumps(result)
+
+
 @app.route("/check_login_token", methods=['POST'])
 def check_login_token():
     token = flask.request.json['token']
