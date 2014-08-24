@@ -23,7 +23,7 @@ class ConnectingWindow(QtGui.QMainWindow):
         super(ConnectingWindow, self).__init__()
         self.buildWidgets()
 
-        QtCore.QTimer().singleShot(500, self.checkToken)
+        QtCore.QTimer().singleShot(500, self.checkVersion)
 
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
@@ -48,6 +48,15 @@ class ConnectingWindow(QtGui.QMainWindow):
         central.setLayout(hbox)
         self.setCentralWidget(central)
 
+    def checkVersion(self):
+        result = post('check_version', {'version': config.VERSION})
+
+        if 'new_version' in result:
+            showNewVersionDialog(result['new_version'], result['url'])
+            self.close()
+        else:
+            self.checkToken()
+
     def checkToken(self):
         token = models.getLoginToken()
         result = post('check_login_token', {'token': token})
@@ -70,7 +79,20 @@ class MainWindow(QtGui.QMainWindow):
 
 
 # -----------------------------------------------------------------------------
-# FUNCTIONS
+# FUNCTIONS - DIALOGS
+
+def showNewVersionDialog(new_version, url):
+    QtGui.QMessageBox.about(
+        None,
+        "Your version of the application is outdated",
+        "Please download the <a href='{}'>recent version {}</a>".format(
+            url, new_version
+            )
+        )
+
+
+# -----------------------------------------------------------------------------
+# FUNCTIONS - API
 
 
 def post(route, data):
