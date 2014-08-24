@@ -15,6 +15,21 @@ import flask
 app = flask.Flask(__name__)
 
 
+@app.route("/check_version", methods=['POST'])
+def check_version():
+    version = flask.request.json['version']
+
+    if version == '2.3':
+        result = {}
+    else:
+        result = {
+            'new_version': '2.3',
+            'url': 'http://download_site.com/installer_v2.3'
+            }
+
+    return json.dumps(result)
+
+
 @app.route("/check_login_token", methods=['POST'])
 def check_login_token():
     token = flask.request.json['token']
