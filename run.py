@@ -52,7 +52,12 @@ class ConnectingWindow(QtGui.QMainWindow):
         result = post('check_version', {'version': config.VERSION})
 
         if 'new_version' in result:
-            showNewVersionDialog(result['new_version'], result['url'])
+            title = "Your version of the application is outdated"
+            text = "Please download the <a href='{}'>recent version {}</a>".format(
+                result['url'],
+                result['new_version']
+                )
+            QtGui.QMessageBox.critical(None, title, text)
             self.close()
         else:
             self.checkToken()
@@ -81,14 +86,6 @@ class MainWindow(QtGui.QMainWindow):
 # -----------------------------------------------------------------------------
 # FUNCTIONS - DIALOGS
 
-def showNewVersionDialog(new_version, url):
-    QtGui.QMessageBox.about(
-        None,
-        "Your version of the application is outdated",
-        "Please download the <a href='{}'>recent version {}</a>".format(
-            url, new_version
-            )
-        )
 
 
 # -----------------------------------------------------------------------------
