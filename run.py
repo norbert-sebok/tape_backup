@@ -66,10 +66,64 @@ class ConnectingWindow(QtGui.QMainWindow):
         token = models.getLoginToken()
         result = post('check_login_token', {'token': token})
 
-        if 'error' in result:
+        if result.get('error') == 'Invalid token':
+            login_window.show()
+            self.close()
+        elif result.get('error'):
             raise Exception(result['error'])
         else:
             main_window.show()
+            self.close()
+
+
+class LoginWindow(QtGui.QMainWindow):
+
+    def __init__(self):
+        super(LoginWindow, self).__init__()
+        self.buildWidgets()
+
+    def buildWidgets(self):
+        self.setWindowTitle(u"Please log in")
+
+        label_name = QtGui.QLabel(u"Username:")
+        label_name.setAlignment(QtCore.Qt.AlignRight)
+
+        label_pass = QtGui.QLabel(u"Password:")
+        label_pass.setAlignment(QtCore.Qt.AlignRight)
+
+        self.edit_name = QtGui.QLineEdit()
+
+        self.edit_pass = QtGui.QLineEdit()
+        self.edit_pass.setEchoMode(QtGui.QLineEdit.Password)
+
+        button = QtGui.QPushButton("&Log in")
+        button.clicked.connect(self.logIn)
+
+        grid = QtGui.QGridLayout()
+        grid.addWidget(label_name, 0, 0)
+        grid.addWidget(label_pass, 1, 0)
+        grid.addWidget(self.edit_name, 0, 1)
+        grid.addWidget(self.edit_pass, 1, 1)
+        grid.addWidget(button, 2, 1)
+
+        central = QtGui.QWidget()
+        central.setLayout(grid)
+        self.setCentralWidget(central)
+
+    def logIn(self):
+        username = self.edit_name.text()
+        password = self.edit_pass.text()
+        result = post('log_in', {'username': username, 'password': password})
+
+        if result.get('error') == 'Invalid username or password':
+            text = 'Invalid username or password'
+            QtGui.QMessageBox.critical(None, text, text)
+        elif result.get('error'):
+            raise Exception(result['error'])
+        else:
+            models.setLoginToken(result['token'])
+            connecting_window.show()
+            QtCore.QTimer().singleShot(500, connecting_window.checkToken)
             self.close()
 
 
@@ -81,11 +135,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
-
-
-# -----------------------------------------------------------------------------
-# FUNCTIONS - DIALOGS
-
 
 
 # -----------------------------------------------------------------------------
@@ -111,7 +160,9 @@ def post(route, data):
 app = QtGui.QApplication(sys.argv)
 
 main_window = MainWindow()
-window = ConnectingWindow()
-window.show()
+login_window = LoginWindow()
+connecting_window = ConnectingWindow()
+
+connecting_window.show()
 
 sys.exit(app.exec_())
