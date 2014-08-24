@@ -11,6 +11,7 @@ import requests
 
 # Local application/library specific imports
 import config
+import models
 
 # -----------------------------------------------------------------------------
 # WINDOWS
@@ -48,7 +49,8 @@ class ConnectingWindow(QtGui.QMainWindow):
         self.setCentralWidget(central)
 
     def checkToken(self):
-        result = post('check_login_token', {'token': 'A_VALID_TOKEN'})
+        token = models.getLoginToken()
+        result = post('check_login_token', {'token': token})
 
         if 'error' in result:
             raise Exception(result['error'])
