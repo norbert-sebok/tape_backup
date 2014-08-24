@@ -30,19 +30,27 @@ class Config(Base):
 # FUNCTIONS
 
 def getLoginToken():
+    return getConfig('login_token')
+
+
+def setLoginToken(value):
+    return setConfig('login_token', value)
+
+
+def getConfig(attr):
     config = session.query(Config).first()
 
     if config:
-        return config.login_token
+        return getattr(config, attr)
 
 
-def setLoginToken(token):
+def setConfig(attr, value):
     config = session.query(Config).first()
 
     if not config:
         config = Config()
 
-    config.login_token = token
+    setattr(config, attr, value)
 
     session.add(config)
     session.commit()
