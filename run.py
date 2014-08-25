@@ -201,7 +201,7 @@ class MainWindow(QtGui.QMainWindow):
 
 class TableModel(QtCore.QAbstractTableModel):
 
-    header = ['ID', 'Project Name', 'Form name', 'Type', 'Status', 'Path']
+    header = ['ID', 'Project Name', 'Form name', 'Type', 'Status', 'Project token', 'Path']
 
     def __init__(self):
         super(TableModel, self).__init__()
@@ -209,7 +209,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def loadRows(self):
         self.rows = [
-            (p.id, p.name, p.form_name, p.type_name, '..', p.path)
+            (p.id, p.name, p.form_name, p.type_name, '..', p.project_token, p.path)
             for p in models.getProjects()
             ]
 
@@ -285,6 +285,7 @@ class NewFileWindow(QtGui.QMainWindow):
     def onCreate(self):
         name = self.edit_name.text()
         form_name = self.drop_form.currentText()
+        type_name = "Real time"
 
         checks = [
             (name, "Please set the project name", self.edit_name),
@@ -298,7 +299,8 @@ class NewFileWindow(QtGui.QMainWindow):
                 widget.setFocus()
                 return
 
-        project_id = models.addProject(name, form_name, "Real time", self.path)
+        project_token = getProjectToken(name, form_name, type_name)
+        project_id = models.addProject(name, form_name, type_name, self.path, project_token)
         main_window.reloadTable(project_id)
 
         self.close()
@@ -320,6 +322,16 @@ def createButton(text, icon_name, func):
 
 # -----------------------------------------------------------------------------
 # FUNCTIONS - API
+
+
+def getProjectToken(name, form_name, type_name):
+    result = post('get_project_token', {'name': name, 'form_name': form_name, 'type_name': type_name})
+
+    if result.get('error'):
+        QtGui.QMessageBox.critical(None, 'Error message from the server', result['error'])
+
+    else:
+        return result['project_token']    
 
 
 def post(route, data):
