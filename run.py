@@ -168,28 +168,50 @@ class MainWindow(QtGui.QMainWindow):
         self.setGeometry(rect)
 
     def createTable(self):
-        self.model = TableModel(self)
+        self.model = TableModel()
 
         self.view = QtGui.QTableView()
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
-        self.view.setSortingEnabled(True)
+
+    def reloadTable(self, project_id=None):
+        self.model.loadRows()
+        self.model.reset()
+
+        if project_id:
+            self.selectById(project_id)
+
+    def selectById(self, id):
+        for count, row in enumerate(self.model.rows):
+            if row[0] == id:
+                index =  self.model.createIndex(count,0)
+                self.view.setCurrentIndex(index)
 
     def createButtons(self):
-        button_add = createButton(u'&New project', 'list-add.png', self.onNewClicked)
+        button_add = createButton(u'&Add new file', 'list-add.png', self.onNewFileClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(button_add)
         self.buttons_layout.addStretch()
 
-    def onNewClicked(self):
-        print "onNewClicked"
+    def onNewFileClicked(self):
+        self.w = NewFileWindow()
+        self.w.show()
 
 
 class TableModel(QtCore.QAbstractTableModel):
 
-    header = ['Project Name', 'Type', 'Status']
-    rows = []
+    header = ['ID', 'Project Name', 'Form name', 'Type', 'Status', 'Path']
+
+    def __init__(self):
+        super(TableModel, self).__init__()
+        self.loadRows()
+
+    def loadRows(self):
+        self.rows = [
+            (p.id, p.name, p.form_name, p.type_name, '..', p.path)
+            for p in models.getProjects()
+            ]
 
     def rowCount(self, parent):
         return len(self.rows)
@@ -200,7 +222,7 @@ class TableModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         if not index.isValid():
             return None
-        elif role != Qt.DisplayRole:
+        elif role != QtCore.Qt.DisplayRole:
             return None
         else:
             return self.rows[index.row()][index.column()]
@@ -209,9 +231,77 @@ class TableModel(QtCore.QAbstractTableModel):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return self.header[col]
 
-    def sort(self, col, order):
-        reverse = (order == QtCore.Qt.DescendingOrder)
-        self.rows.sort(key=operator.itemgetter(col), reverse=reverse)
+
+class NewFileWindow(QtGui.QMainWindow):
+
+    def __init__(self):
+        super(NewFileWindow, self).__init__()
+        self.buildWidgets()
+
+    def buildWidgets(self):
+        self.setWindowTitle(u"New file")
+
+        label_name = QtGui.QLabel(u"Project name:")
+        label_name.setAlignment(QtCore.Qt.AlignRight)
+
+        label_form = QtGui.QLabel(u"Form name:")
+        label_form.setAlignment(QtCore.Qt.AlignRight)
+
+        label_file = QtGui.QLabel(u"File:")
+        label_file.setAlignment(QtCore.Qt.AlignRight)
+
+        self.edit_name = QtGui.QLineEdit()
+
+        self.drop_form = QtGui.QComboBox()
+        for name in config.FORM_NAMES:
+            self.drop_form.addItem(name)
+
+        button = createButton("&Create", "list-add.png", self.onCreate)
+        self.button_file = createButton("...", None, self.selectFile)
+        self.path = None
+
+        grid = QtGui.QGridLayout()
+        grid.addWidget(label_name, 0, 0)
+        grid.addWidget(label_form, 1, 0)
+        grid.addWidget(label_file, 2, 0)
+        grid.addWidget(self.edit_name, 0, 1)
+        grid.addWidget(self.drop_form, 1, 1)
+        grid.addWidget(self.button_file, 2, 1)
+        grid.addWidget(button, 3, 1)
+
+        central = QtGui.QWidget()
+        central.setLayout(grid)
+        self.setCentralWidget(central)
+
+    def selectFile(self):
+        title = u"Which file would you like to upload?"
+        default = QtCore.QDir().homePath()
+        path, _ = QtGui.QFileDialog().getOpenFileName(None, title, default)
+
+        if path:
+            self.button_file.setText(os.path.basename(path))
+            self.path = path
+
+    def onCreate(self):
+        name = self.edit_name.text()
+        form_name = self.drop_form.currentText()
+
+        checks = [
+            (name, "Please set the project name", self.edit_name),
+            (form_name, "Please select the form name", self.drop_form),
+            (self.path, "Please select a file", self.button_file)
+            ]
+
+        for value, text, widget in checks:
+            if not value:
+                QtGui.QMessageBox.critical(None, "Missing data", text)
+                widget.setFocus()
+                return
+
+        project_id = models.addProject(name, form_name, "Real time", self.path)
+        main_window.reloadTable(project_id)
+
+        self.close()
 
 
 # -----------------------------------------------------------------------------
@@ -221,8 +311,9 @@ def createButton(text, icon_name, func):
     button = QtGui.QPushButton(text)
     button.connect(button, QtCore.SIGNAL("clicked()"), func)
 
-    icon = QtGui.QIcon( os.path.join('images', icon_name) )
-    button.setIcon(icon)
+    if icon_name:
+        icon = QtGui.QIcon( os.path.join('images', icon_name) )
+        button.setIcon(icon)
 
     return button
 
