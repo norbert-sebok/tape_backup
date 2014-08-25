@@ -335,6 +335,15 @@ def getProjectToken(name, form_name, type_name):
 
 
 def post(route, data):
+    try:
+        return post_core(route, data)
+
+    except Exception, e:
+        QtGui.QMessageBox.critical(None, 'Error happened', str(e))
+        raise
+
+
+def post_core(route, data):
     url = '{}/{}'.format(config.API_URL, route)
     json_data = json.dumps(data)
     headers = {'content-type': 'application/json'}
