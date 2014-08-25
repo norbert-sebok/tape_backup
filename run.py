@@ -3,6 +3,7 @@
 
 # Standard library imports
 import json
+import operator
 import sys
 
 # Related third party imports
@@ -143,6 +144,14 @@ class MainWindow(QtGui.QMainWindow):
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
         self.setSizeAndPosition(800, 600)
+        self.createTable()
+
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.view)
+
+        central = QtGui.QWidget()
+        central.setLayout(layout)
+        self.setCentralWidget(central)
 
     def setSizeAndPosition(self, width, height):
         desktop = QtGui.QApplication.desktop()
@@ -156,6 +165,42 @@ class MainWindow(QtGui.QMainWindow):
 
         rect.moveCenter(screen.center())
         self.setGeometry(rect)
+
+    def createTable(self):
+        self.model = TableModel(self)
+
+        self.view = QtGui.QTableView()
+        self.view.setModel(self.model)
+        self.view.resizeColumnsToContents()
+        self.view.setSortingEnabled(True)
+
+
+class TableModel(QtCore.QAbstractTableModel):
+
+    header = ['Project Name', 'Type', 'Status']
+    rows = []
+
+    def rowCount(self, parent):
+        return len(self.rows)
+
+    def columnCount(self, parent):
+        return len(self.header)
+
+    def data(self, index, role):
+        if not index.isValid():
+            return None
+        elif role != Qt.DisplayRole:
+            return None
+        else:
+            return self.rows[index.row()][index.column()]
+
+    def headerData(self, col, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return self.header[col]
+
+    def sort(self, col, order):
+        reverse = (order == QtCore.Qt.DescendingOrder)
+        self.rows.sort(key=operator.itemgetter(col), reverse=reverse)
 
 
 # -----------------------------------------------------------------------------
