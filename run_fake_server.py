@@ -3,6 +3,7 @@
 
 # Standard library imports
 import json
+import uuid
 
 # Related third party imports
 import flask
@@ -53,6 +54,17 @@ def check_login_token():
         result = {'error': 'Invalid token'}
 
     return json.dumps(result)
+
+
+@app.route("/get_project_token", methods=['POST'])
+def get_project_token():
+    name = flask.request.json['name']
+    form_name = flask.request.json['form_name']
+    type_name = flask.request.json['type_name']
+
+    project_token = str(uuid.uuid4())
+
+    return json.dumps({'project_token': project_token})
 
 
 # -----------------------------------------------------------------------------
