@@ -34,6 +34,7 @@ class Project(Base):
     form_name = Column(String)
     type_name = Column(String)
     path = Column(String)
+    project_token = Column(String)
 
 
 # -----------------------------------------------------------------------------
@@ -69,12 +70,13 @@ def setConfig(attr, value):
 # -----------------------------------------------------------------------------
 # FUNCTIONS - PROJECT
 
-def addProject(name, form_name, type_name, path):
+def addProject(name, form_name, type_name, path, project_token):
     project = Project(
         name=name,
         form_name=form_name,
         type_name=type_name,
-        path=path
+        path=path,
+        project_token=project_token
         )
 
     session.add(project)
