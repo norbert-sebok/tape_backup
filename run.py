@@ -156,12 +156,10 @@ class MainWindow(QtGui.QMainWindow):
     def setSizeAndPosition(self, width, height):
         desktop = QtGui.QApplication.desktop()
         screen = desktop.screenGeometry(desktop.primaryScreen())
-        rect = QtCore.QRect(0, 0, width, height)
 
-        if screen.width() < width:
-            rect.setWidth(screen.width())
-        if screen.height() < 600:
-            rect.setHeight(screen.height())
+        width = min(screen.width(), width)
+        height = min(screen.height(), height)
+        rect = QtCore.QRect(0, 0, width, height)
 
         rect.moveCenter(screen.center())
         self.setGeometry(rect)
