@@ -26,8 +26,18 @@ class Config(Base):
     login_token = Column(String)
 
 
+class Project(Base):
+    __tablename__ = 'project'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    form_name = Column(String)
+    type_name = Column(String)
+    path = Column(String)
+
+
 # -----------------------------------------------------------------------------
-# FUNCTIONS
+# FUNCTIONS - CONFIG
 
 def getLoginToken():
     return getConfig('login_token')
@@ -54,6 +64,27 @@ def setConfig(attr, value):
 
     session.add(config)
     session.commit()
+
+
+# -----------------------------------------------------------------------------
+# FUNCTIONS - PROJECT
+
+def addProject(name, form_name, type_name, path):
+    project = Project(
+        name=name,
+        form_name=form_name,
+        type_name=type_name,
+        path=path
+        )
+
+    session.add(project)
+    session.commit()
+
+    return project.id
+
+
+def getProjects():
+    return session.query(Project).all()
 
 
 # -----------------------------------------------------------------------------
