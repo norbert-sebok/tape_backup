@@ -142,6 +142,20 @@ class MainWindow(QtGui.QMainWindow):
 
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
+        self.setSizeAndPosition(800, 600)
+
+    def setSizeAndPosition(self, width, height):
+        desktop = QtGui.QApplication.desktop()
+        screen = desktop.screenGeometry(desktop.primaryScreen())
+        rect = QtCore.QRect(0, 0, width, height)
+
+        if screen.width() < width:
+            rect.setWidth(screen.width())
+        if screen.height() < 600:
+            rect.setHeight(screen.height())
+
+        rect.moveCenter(screen.center())
+        self.setGeometry(rect)
 
 
 # -----------------------------------------------------------------------------
