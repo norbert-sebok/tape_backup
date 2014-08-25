@@ -65,12 +65,16 @@ class ConnectingWindow(QtGui.QMainWindow):
     def checkToken(self):
         token = models.getLoginToken()
         result = post('check_login_token', {'token': token})
+        error = result.get('error')
 
-        if result.get('error') == 'Invalid token':
+        if error == 'Invalid token':
             login_window.show()
             self.close()
-        elif result.get('error'):
-            raise Exception(result['error'])
+
+        elif error:
+            QtGui.QMessageBox.critical(None, 'Error message from the server', error)
+            self.close()
+
         else:
             main_window.show()
             self.close()
@@ -118,8 +122,11 @@ class LoginWindow(QtGui.QMainWindow):
         if result.get('error') == 'Invalid username or password':
             text = 'Invalid username or password'
             QtGui.QMessageBox.critical(None, text, text)
+
         elif result.get('error'):
-            raise Exception(result['error'])
+            QtGui.QMessageBox.critical(None, 'Error message from the server', result['error'])
+            self.close()
+
         else:
             models.setLoginToken(result['token'])
             connecting_window.show()
