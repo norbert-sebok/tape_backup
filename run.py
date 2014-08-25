@@ -4,6 +4,7 @@
 # Standard library imports
 import json
 import operator
+import os
 import sys
 
 # Related third party imports
@@ -101,8 +102,7 @@ class LoginWindow(QtGui.QMainWindow):
         self.edit_pass = QtGui.QLineEdit()
         self.edit_pass.setEchoMode(QtGui.QLineEdit.Password)
 
-        button = QtGui.QPushButton("&Log in")
-        button.clicked.connect(self.logIn)
+        button = createButton("&Log in", "gtk-dialog-authentication.png", self.logIn)
 
         grid = QtGui.QGridLayout()
         grid.addWidget(label_name, 0, 0)
@@ -144,10 +144,13 @@ class MainWindow(QtGui.QMainWindow):
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
         self.setSizeAndPosition(800, 600)
+
         self.createTable()
+        self.createButtons()
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.view)
+        layout.addLayout(self.buttons_layout)
 
         central = QtGui.QWidget()
         central.setLayout(layout)
@@ -171,6 +174,16 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
         self.view.setSortingEnabled(True)
+
+    def createButtons(self):
+        button_add = createButton(u'&New project', 'list-add.png', self.onNewClicked)
+
+        self.buttons_layout = QtGui.QHBoxLayout()
+        self.buttons_layout.addWidget(button_add)
+        self.buttons_layout.addStretch()
+
+    def onNewClicked(self):
+        print "onNewClicked"
 
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -199,6 +212,19 @@ class TableModel(QtCore.QAbstractTableModel):
     def sort(self, col, order):
         reverse = (order == QtCore.Qt.DescendingOrder)
         self.rows.sort(key=operator.itemgetter(col), reverse=reverse)
+
+
+# -----------------------------------------------------------------------------
+# FUNCTIONS - GUI
+
+def createButton(text, icon_name, func):
+    button = QtGui.QPushButton(text)
+    button.connect(button, QtCore.SIGNAL("clicked()"), func)
+
+    icon = QtGui.QIcon( os.path.join('images', icon_name) )
+    button.setIcon(icon)
+
+    return button
 
 
 # -----------------------------------------------------------------------------
