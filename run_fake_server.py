@@ -46,9 +46,9 @@ def log_in():
 
 @app.route("/check_login_token", methods=['POST'])
 def check_login_token():
-    token = flask.request.json['token']
+    login_token = flask.request.json['login_token']
 
-    if token == 'A_VALID_TOKEN':
+    if isValidLoginToken(login_token):
         result = {}
     else:
         result = {'error': 'Invalid token'}
@@ -58,13 +58,26 @@ def check_login_token():
 
 @app.route("/get_project_token", methods=['POST'])
 def get_project_token():
+    login_token = flask.request.json['login_token']
     name = flask.request.json['name']
     form_name = flask.request.json['form_name']
     type_name = flask.request.json['type_name']
 
-    project_token = str(uuid.uuid4())
+    if isValidLoginToken(login_token):
+        project_token = str(uuid.uuid4())
+        result = {'project_token': project_token}
+    else:
+        result = {'error': 'Invalid token'}
 
-    return json.dumps({'project_token': project_token})
+    return json.dumps(result)
+
+
+# -----------------------------------------------------------------------------
+# FUNCTIONS
+
+
+def isValidLoginToken(login_token):
+    return login_token == 'A_VALID_TOKEN'
 
 
 # -----------------------------------------------------------------------------
