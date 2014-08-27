@@ -5,7 +5,7 @@
 import os
 
 # Related third party imports
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Boolean, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -30,12 +30,16 @@ class Project(Base):
     __tablename__ = 'project'
 
     id = Column(Integer, primary_key=True)
+
     name = Column(String)
     form_name = Column(String)
     type_name = Column(String)
     path = Column(String)
     project_token = Column(String)
     validation = Column(String)
+
+    in_progress = Column(Boolean)
+    status = Column(String)
 
 
 # -----------------------------------------------------------------------------
@@ -94,7 +98,23 @@ def setValidation(project, validation):
     project.validation = validation
     session.add(project)
     session.commit()
-    
+
+
+def setStatus(project, status):
+    project.status = status
+    session.add(project)
+    session.commit()
+
+
+def setInProgress(project, in_progress):
+    project.in_progress = in_progress
+    session.add(project)
+    session.commit()
+
+
+def hasInProgress():
+    return bool(session.query(Project).filter(Project.in_progress==True).all())
+
 
 # -----------------------------------------------------------------------------
 # ENGINE
