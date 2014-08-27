@@ -187,8 +187,13 @@ class MainWindow(QtGui.QMainWindow):
         self.buttons_layout.addStretch()
 
     def onNewFileClicked(self):
-        self.w = NewFileWindow()
-        self.w.show()
+        login_token = models.getLoginToken()
+        result, error = post("get_form_names", {"login_token": login_token})
+
+        if not error:
+            form_names = result["form_names"]
+            self.w = NewFileWindow(form_names)
+            self.w.show()
 
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -226,8 +231,9 @@ class TableModel(QtCore.QAbstractTableModel):
 
 class NewFileWindow(QtGui.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, form_names):
         super(NewFileWindow, self).__init__()
+        self.form_names = form_names
         self.buildWidgets()
 
     def buildWidgets(self):
@@ -245,7 +251,7 @@ class NewFileWindow(QtGui.QMainWindow):
         self.edit_name = QtGui.QLineEdit()
 
         self.drop_form = QtGui.QComboBox()
-        for name in config.FORM_NAMES:
+        for name in self.form_names:
             self.drop_form.addItem(name)
 
         button = createButton("&Create", "list-add.png", self.onCreate)
