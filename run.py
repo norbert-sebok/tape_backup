@@ -64,8 +64,8 @@ class ConnectingWindow(QtGui.QMainWindow):
             self.checkToken()
 
     def checkToken(self):
-        token = models.getLoginToken()
-        result = post("check_login_token", {"token": token})
+        login_token = models.getLoginToken()
+        result = post("check_login_token", {"login_token": login_token})
         error = result.get("error")
 
         if error == "Invalid token":
@@ -324,7 +324,10 @@ def createButton(text, icon_name, func):
 
 
 def getProjectToken(name, form_name, type_name):
-    result = post("get_project_token", {"name": name, "form_name": form_name, "type_name": type_name})
+    login_token = models.getLoginToken()
+    data = {"login_token": login_token, "name": name, "form_name": form_name, "type_name": type_name}
+
+    result = post("get_project_token", data)
 
     if result.get("error"):
         QtGui.QMessageBox.critical(None, "Error message from the server", result["error"])
