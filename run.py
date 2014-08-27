@@ -209,28 +209,37 @@ class MainWindow(QtGui.QMainWindow):
 
     def getCurrentProject(self):
         i = self.view.currentIndex().row()
-        row = self.model.rows[i]
-        project = row[-1]
-        return project
+        if i > -1:
+            row = self.model.rows[i]
+            project = row[-1]
+            return project
 
     def createButtons(self):
         self.button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
         self.button_valid = createButton(u"&Validate", "gtk-apply.png", self.onValidateClicked)
-        self.button_stop = createButton(u"&Stop", "edit-delete-orig.png", self.onStopClicked)
+        self.button_continue = createButton(u"&Continue", "media-start.png", self.onContinueClicked)
+        self.button_pause = createButton(u"&Pause", "media-pause.png", self.onPauseClicked)
+        self.button_stop = createButton(u"&Stop", "media-stop.png", self.onStopClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.button_add)
         self.buttons_layout.addWidget(self.button_valid)
+        self.buttons_layout.addWidget(self.button_continue)
+        self.buttons_layout.addWidget(self.button_pause)
         self.buttons_layout.addWidget(self.button_stop)
         self.buttons_layout.addStretch()
 
     def enableDisableButtons(self):
         project = self.getCurrentProject()
-        in_progress = (project and project.in_progress)
 
-        print "enableDisableButtons", in_progress
-        self.button_valid.setEnabled(not in_progress)
-        self.button_stop.setEnabled(in_progress)
+        exists = bool(project)
+        in_progress = bool(project and project.in_progress)
+        paused = bool(project and project.paused)
+
+        self.button_valid.setEnabled(exists and not in_progress)
+        self.button_continue.setEnabled(paused)
+        self.button_pause.setEnabled(in_progress and not paused)
+        self.button_stop.setEnabled(in_progress and not paused)
 
     def onNewFileClicked(self):
         login_token = models.getLoginToken()
@@ -255,9 +264,19 @@ class MainWindow(QtGui.QMainWindow):
 
             self.enableDisableButtons()
 
+    def onContinueClicked(self):
+        project = self.getCurrentProject()
+        manager.continueProcess(project)
+        self.reloadTable()
+
+    def onPauseClicked(self):
+        project = self.getCurrentProject()
+        manager.pauseProcess(project)
+        self.reloadTable()
+
     def onStopClicked(self):
         project = self.getCurrentProject()
-        models.stopProject(project)
+        manager.stopProcess(project)
         self.reloadTable()
 
     def updateStatus(self, project, status):
