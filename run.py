@@ -2,6 +2,9 @@
 # IMPORTS
 
 # Standard library imports
+import csv
+import datetime
+import functools
 import json
 import os
 import sys
@@ -133,6 +136,12 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__()
         self.buildWidgets()
 
+    def closeEvent(self, event):
+        if models.hasInProgress():
+            event.ignore()
+        else:
+            event.accept()
+
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
         self.setSizeAndPosition(800, 600)
@@ -177,10 +186,15 @@ class MainWindow(QtGui.QMainWindow):
             self.selectById(project_id)
 
     def selectById(self, id):
+        count = self.getCountById(id)
+        if count:
+            index = self.model.createIndex(count, 0)
+            self.view.setCurrentIndex(index)
+
+    def getCountById(self, id):
         for count, row in enumerate(self.model.rows):
             if row[0] == id:
-                index = self.model.createIndex(count, 0)
-                self.view.setCurrentIndex(index)
+                return count
 
     def getCurrentProject(self):
         i = self.view.currentIndex().row()
@@ -213,12 +227,19 @@ class MainWindow(QtGui.QMainWindow):
 
         if not error:
             models.setValidation(project, result["validation"])
-            self.reloadTable()
+            runValidation(project, self.updateStatus)
+
+    def updateStatus(self, project, status):
+        count = self.getCountById(project.id)
+        if count != None:
+            self.model.rows[count][self.model.status_index] = status
+            self.model.dataChanged.emit(count, self.model.status_index)
 
 
 class TableModel(QtCore.QAbstractTableModel):
 
     header = ["ID", "Project Name", "Form name", "Type", "Status", "Project token", "Path"]
+    status_index = 4
 
     def __init__(self):
         super(TableModel, self).__init__()
@@ -226,7 +247,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def loadRows(self):
         self.rows = [
-            (p.id, p.name, p.form_name, p.type_name, "..", p.project_token, p.path, p)
+            [p.id, p.name, p.form_name, p.type_name, p.status, p.project_token, p.path, p]
             for p in models.getProjects()
             ]
 
@@ -378,6 +399,70 @@ def post_core(route, data):
         return r.json()
     else:
         raise Exception(r.content)
+
+
+# -----------------------------------------------------------------------------
+# FUNCTIONS - LOGIC
+
+
+def runValidation(project, update):
+    models.setInProgress(project, True)
+
+    validators = getValidators(project)
+    errors = {count: 0 for count, _ in enumerate(validators)}
+
+    with open(project.path) as f:
+        reader = csv.reader(f, delimiter=',', quotechar='"')
+
+        for count, row in enumerate(reader):
+            validateRow(validators, row, errors)
+
+            if count % 1000 == 0:
+                invalid = sum(errors.values())
+                valid = count - invalid
+                status = "Validating rows: {:,} valid, {:,} invalid".format(valid, invalid)
+                models.setStatus(project, status)
+                update(project, status)
+
+            app.processEvents()
+
+    models.setInProgress(project, False)
+
+
+def getValidators(project):
+    d = {
+        'number': validateNumber,
+        'text': validateText,
+        'datetimestamp': validateStamp
+        }
+
+    return [d[v] for v in project.validation.split(',')]
+
+
+def validateRow(validators, row, errors):
+    for count, (validator, value) in enumerate(zip(validators, row)):
+        if not validator(value):
+            errors[count] += 1
+
+
+def validateNumber(value):
+    try:
+        float(value)
+        return True
+    except:
+        return False
+
+
+def validateStamp(value):
+    try:
+        datetime.datetime.strptime(value, '%Y-%m-%d')
+        return True
+    except:
+        return False
+
+
+def validateText(value):
+    return True
 
 
 # -----------------------------------------------------------------------------
