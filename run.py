@@ -50,7 +50,7 @@ class ConnectingWindow(QtGui.QMainWindow):
         self.setCentralWidget(central)
 
     def checkVersion(self):
-        result = post("check_version", {"version": config.VERSION})
+        result, _ = post("check_version", {"version": config.VERSION})
 
         if "new_version" in result:
             title = "Your version of the application is outdated"
@@ -65,20 +65,13 @@ class ConnectingWindow(QtGui.QMainWindow):
 
     def checkToken(self):
         login_token = models.getLoginToken()
-        result = post("check_login_token", {"login_token": login_token})
-        error = result.get("error")
 
-        if error == "Invalid token":
-            login_window.show()
-            self.close()
+        _, error = post("check_login_token", {"login_token": login_token})
 
-        elif error:
-            QtGui.QMessageBox.critical(None, "Error message from the server", error)
-            self.close()
-
-        else:
+        if not error:
             main_window.show()
-            self.close()
+
+        self.close()
 
 
 class LoginWindow(QtGui.QMainWindow):
@@ -117,14 +110,14 @@ class LoginWindow(QtGui.QMainWindow):
     def logIn(self):
         username = self.edit_name.text()
         password = self.edit_pass.text()
-        result = post("log_in", {"username": username, "password": password})
+        result, error = post("log_in", {"username": username, "password": password})
 
-        if result.get("error") == "Invalid username or password":
+        if error == "Invalid username or password":
             text = "Invalid username or password"
             QtGui.QMessageBox.critical(None, text, text)
 
-        elif result.get("error"):
-            QtGui.QMessageBox.critical(None, "Error message from the server", result["error"])
+        elif error:
+            QtGui.QMessageBox.critical(None, "Error message from the server", error)
             self.close()
 
         else:
@@ -299,10 +292,11 @@ class NewFileWindow(QtGui.QMainWindow):
                 return
 
         project_token = getProjectToken(name, form_name, type_name)
-        project_id = models.addProject(name, form_name, type_name, self.path, project_token)
-        main_window.reloadTable(project_id)
 
-        self.close()
+        if project_token:
+            project_id = models.addProject(name, form_name, type_name, self.path, project_token)
+            main_window.reloadTable(project_id)
+            self.close()
 
 
 # -----------------------------------------------------------------------------
@@ -327,18 +321,20 @@ def getProjectToken(name, form_name, type_name):
     login_token = models.getLoginToken()
     data = {"login_token": login_token, "name": name, "form_name": form_name, "type_name": type_name}
 
-    result = post("get_project_token", data)
+    result, error = post("get_project_token", data)
 
-    if result.get("error"):
-        QtGui.QMessageBox.critical(None, "Error message from the server", result["error"])
-
-    else:
-        return result["project_token"]
+    return (None if error else result["project_token"])
 
 
 def post(route, data):
     try:
-        return post_core(route, data)
+        result = post_core(route, data)
+        error = result.get("error")
+
+        if error == "Invalid login token":
+            login_window.show()
+
+        return result, error
 
     except Exception, e:
         QtGui.QMessageBox.critical(None, "Error happened", str(e))
