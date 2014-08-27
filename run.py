@@ -139,7 +139,18 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeEvent(self, event):
         if models.hasInProgress():
-            event.ignore()
+            title = "There are running processes"
+            text = "Would you like to stop all running processes?"
+            yes = QtGui.QMessageBox.Yes
+            no = QtGui.QMessageBox.No
+            answer = QtGui.QMessageBox.question(self, title, text, yes, no)
+
+            if answer == yes:
+                manager.stopAllProcesses()
+                event.accept()
+            else:
+                event.ignore()
+
         else:
             event.accept()
 

@@ -24,6 +24,10 @@ class ProcessManager(object):
     def addProcess(self, process):
         self.processes.append(process)
 
+    def stopAllProcesses(self):
+        for process in self.processes:
+            process.stopProcess()
+
     def stopProcess(self, project):
         for process in self.processes:
             if process.project == project:
