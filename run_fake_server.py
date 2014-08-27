@@ -89,6 +89,19 @@ def get_form_names():
     return json.dumps(result)
 
 
+@app.route("/get_validations", methods=['POST'])
+def get_validations():
+    login_token = flask.request.json['login_token']
+    form_name = flask.request.json['form_name']
+
+    if isValidLoginToken(login_token):
+        result = {'validation': "number,number,text,datetimestamp"}
+    else:
+        result = {'error': 'Invalid login token'}
+
+    return json.dumps(result)
+
+
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 
