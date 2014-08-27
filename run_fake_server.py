@@ -11,6 +11,11 @@ import flask
 # Local application/library specific imports
 
 # -----------------------------------------------------------------------------
+# DATA
+
+VALID_LOGIN_TOKEN = 'A VALID LOGIN TOKEN'
+
+# -----------------------------------------------------------------------------
 # ROUTES
 
 app = flask.Flask(__name__)
@@ -37,7 +42,7 @@ def log_in():
     password = flask.request.json['password']
 
     if username == 'somebody' and password == 'secret':
-        result = {'token': 'A_VALID_TOKEN'}
+        result = {'token': VALID_LOGIN_TOKEN}
     else:
         result = {'error': 'Invalid username or password'}
 
@@ -51,7 +56,7 @@ def check_login_token():
     if isValidLoginToken(login_token):
         result = {}
     else:
-        result = {'error': 'Invalid token'}
+        result = {'error': 'Invalid login token'}
 
     return json.dumps(result)
 
@@ -67,7 +72,7 @@ def get_project_token():
         project_token = str(uuid.uuid4())
         result = {'project_token': project_token}
     else:
-        result = {'error': 'Invalid token'}
+        result = {'error': 'Invalid login token'}
 
     return json.dumps(result)
 
@@ -77,7 +82,7 @@ def get_project_token():
 
 
 def isValidLoginToken(login_token):
-    return login_token == 'A_VALID_TOKEN'
+    return login_token == VALID_LOGIN_TOKEN
 
 
 # -----------------------------------------------------------------------------
