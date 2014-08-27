@@ -182,11 +182,19 @@ class MainWindow(QtGui.QMainWindow):
                 index = self.model.createIndex(count, 0)
                 self.view.setCurrentIndex(index)
 
+    def getCurrentProject(self):
+        i = self.view.currentIndex().row()
+        row = self.model.rows[i]
+        project = row[-1]
+        return project
+
     def createButtons(self):
         button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
+        button_valid = createButton(u"&Validate", "gtk-apply.png", self.onValidateClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(button_add)
+        self.buttons_layout.addWidget(button_valid)
         self.buttons_layout.addStretch()
 
     def onNewFileClicked(self):
@@ -197,6 +205,15 @@ class MainWindow(QtGui.QMainWindow):
             form_names = result["form_names"]
             self.w = NewFileWindow(form_names)
             self.w.show()
+
+    def onValidateClicked(self):
+        project = self.getCurrentProject()
+        login_token = models.getLoginToken()
+        result, error = post("get_validations", {"login_token": login_token, 'form_name':project.form_name})
+
+        if not error:
+            models.setValidation(project, result["validation"])
+            self.reloadTable()
 
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -209,7 +226,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def loadRows(self):
         self.rows = [
-            (p.id, p.name, p.form_name, p.type_name, "..", p.project_token, p.path)
+            (p.id, p.name, p.form_name, p.type_name, "..", p.project_token, p.path, p)
             for p in models.getProjects()
             ]
 
