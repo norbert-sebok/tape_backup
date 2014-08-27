@@ -24,6 +24,22 @@ class ProcessManager(object):
     def addProcess(self, process):
         self.processes.append(process)
 
+    def stopProcess(self, project):
+        for process in self.processes:
+            if process.project == project:
+                process.stopProcess()
+
+    def pauseProcess(self, project):
+        for process in self.processes:
+            if process.project == project:
+                process.pauseProcess()
+
+    def continueProcess(self, project):
+        for process in self.processes:
+            if process.project == project:
+                process.continueProcess()
+                self.runProcesses()
+
     def runProcesses(self):
         if not self.running:
             self.running = True
@@ -33,12 +49,17 @@ class ProcessManager(object):
     def runProcessesCore(self):
         while True:
             for p in self.processes:
-                p.runOneStep()
+                if not p.paused:
+                    p.runOneStep()
 
             self.processEvents()
 
-            self.processes = [p for p in self.processes if p.isRunning()]
+            self.processes = [p for p in self.processes if p.running]
             if not self.processes:
+                break
+
+            live_processes = [p for p in self.processes if not p.paused]
+            if not live_processes:
                 break
 
 
@@ -55,17 +76,30 @@ class ValidationProcess(object):
         self.validators = getValidators(project)
         self.errors = {count: 0 for count, _ in enumerate(self.validators)}
 
+        self.running = True
+        self.paused = False
+        self.finished = False
+
         models.setInProgress(project, True)
         self.generator = self.runProcess()
 
-    def isRunning(self):
-        return self.project.in_progress
+    def stopProcess(self):
+        self.running = False
+        models.stopProject(self.project)
+
+    def pauseProcess(self):
+        self.paused = True
+        models.pauseProject(self.project)
+
+    def continueProcess(self):
+        self.paused = False
+        models.continueProject(self.project)
 
     def runOneStep(self):
         try:
             self.generator.next()
         except StopIteration:
-            models.setInProgress(project, False)
+            models.setInProgress(self.project, False)
 
     def runProcess(self):
         with open(self.project.path) as f:
@@ -75,6 +109,9 @@ class ValidationProcess(object):
                 validateRow(self.validators, row, self.errors)
                 self.updateStatus(count + 1)
                 yield
+
+        self.finished = True
+        self.running = False
 
     def updateStatus(self, count):
         if count % 1000 == 0:
