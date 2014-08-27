@@ -39,6 +39,7 @@ class Project(Base):
     validation = Column(String)
 
     in_progress = Column(Boolean)
+    paused = Column(Boolean)
     status = Column(String)
 
 
@@ -112,9 +113,35 @@ def setInProgress(project, in_progress):
     session.commit()
 
 
+def clearBrokenProjectsOnAppStart():
+    projects = session.query(Project).filter(Project.in_progress==True).all()
+    projects += session.query(Project).filter(Project.paused==True).all()
+
+    for project in projects:
+        project.in_progress = False
+        project.paused = False
+        project.status = "Broken"
+        session.add(project)
+        session.commit()
+
+
 def stopProject(project):
     project.in_progress = False
     project.status = "Stopped"
+    session.add(project)
+    session.commit()
+
+
+def pauseProject(project):
+    project.paused = True
+    project.status = "Paused"
+    session.add(project)
+    session.commit()
+
+
+def continueProject(project):
+    project.paused = False
+    project.status = "In progress"
     session.add(project)
     session.commit()
 
@@ -139,3 +166,5 @@ Base.metadata.create_all(engine)
 # SESSION
 
 session = sessionmaker(bind=engine)()
+
+clearBrokenProjectsOnAppStart()
