@@ -111,7 +111,9 @@ class ValidationProcess(object):
             for count, row in enumerate(reader):
                 validateRow(self.validators, row, self.errors)
                 self.updateStatus(count + 1)
-                yield
+
+                if count % 100 == 0:
+                    yield
 
         self.finished = True
         self.running = False
