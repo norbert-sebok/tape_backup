@@ -250,6 +250,8 @@ class MainWindow(QtGui.QMainWindow):
             self.w = NewFileWindow(form_names)
             self.w.show()
 
+        self.view.setFocus()
+
     def onValidateClicked(self):
         project = self.getCurrentProject()
         login_token = models.getLoginToken()
@@ -264,20 +266,25 @@ class MainWindow(QtGui.QMainWindow):
 
             self.enableDisableButtons()
 
+        self.view.setFocus()
+
     def onContinueClicked(self):
         project = self.getCurrentProject()
         manager.continueProcess(project)
         self.reloadTable()
+        self.view.setFocus()
 
     def onPauseClicked(self):
         project = self.getCurrentProject()
         manager.pauseProcess(project)
         self.reloadTable()
+        self.view.setFocus()
 
     def onStopClicked(self):
         project = self.getCurrentProject()
         manager.stopProcess(project)
         self.reloadTable()
+        self.view.setFocus()
 
     def updateStatus(self, project, status):
         count = self.getCountById(project.id)
