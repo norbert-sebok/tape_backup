@@ -77,6 +77,18 @@ def get_project_token():
     return json.dumps(result)
 
 
+@app.route("/get_form_names", methods=['POST'])
+def get_form_names():
+    login_token = flask.request.json['login_token']
+
+    if isValidLoginToken(login_token):
+        result = {'form_names': ["Type alpha", "Type beta", "Type gamma", "Delta"]}
+    else:
+        result = {'error': 'Invalid login token'}
+
+    return json.dumps(result)
+
+
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 
