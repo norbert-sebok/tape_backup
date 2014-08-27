@@ -16,6 +16,7 @@ import requests
 # Local application/library specific imports
 import config
 import models
+import processes
 
 # -----------------------------------------------------------------------------
 # WINDOWS
@@ -227,7 +228,9 @@ class MainWindow(QtGui.QMainWindow):
 
         if not error:
             models.setValidation(project, result["validation"])
-            runValidation(project, self.updateStatus)
+
+            process = processes.ValidationProcess(project, self.updateStatus)
+            manager.runProcess(process)
 
     def updateStatus(self, project, status):
         count = self.getCountById(project.id)
@@ -402,70 +405,6 @@ def post_core(route, data):
 
 
 # -----------------------------------------------------------------------------
-# FUNCTIONS - LOGIC
-
-
-def runValidation(project, update):
-    models.setInProgress(project, True)
-
-    validators = getValidators(project)
-    errors = {count: 0 for count, _ in enumerate(validators)}
-
-    with open(project.path) as f:
-        reader = csv.reader(f, delimiter=',', quotechar='"')
-
-        for count, row in enumerate(reader):
-            validateRow(validators, row, errors)
-
-            if count % 1000 == 0:
-                invalid = sum(errors.values())
-                valid = count - invalid
-                status = "Validating rows: {:,} valid, {:,} invalid".format(valid, invalid)
-                models.setStatus(project, status)
-                update(project, status)
-
-            app.processEvents()
-
-    models.setInProgress(project, False)
-
-
-def getValidators(project):
-    d = {
-        'number': validateNumber,
-        'text': validateText,
-        'datetimestamp': validateStamp
-        }
-
-    return [d[v] for v in project.validation.split(',')]
-
-
-def validateRow(validators, row, errors):
-    for count, (validator, value) in enumerate(zip(validators, row)):
-        if not validator(value):
-            errors[count] += 1
-
-
-def validateNumber(value):
-    try:
-        float(value)
-        return True
-    except:
-        return False
-
-
-def validateStamp(value):
-    try:
-        datetime.datetime.strptime(value, '%Y-%m-%d')
-        return True
-    except:
-        return False
-
-
-def validateText(value):
-    return True
-
-
-# -----------------------------------------------------------------------------
 # MAIN
 
 app = QtGui.QApplication(sys.argv)
@@ -473,6 +412,8 @@ app = QtGui.QApplication(sys.argv)
 main_window = MainWindow()
 login_window = LoginWindow()
 connecting_window = ConnectingWindow()
+
+manager = processes.ProcessManager(app.processEvents)
 
 connecting_window.show()
 
