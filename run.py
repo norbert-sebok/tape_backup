@@ -50,13 +50,13 @@ class ConnectingWindow(QtGui.QMainWindow):
         self.setCentralWidget(central)
 
     def checkVersion(self):
-        result = post('check_version', {'version': config.VERSION})
+        result = post("check_version", {"version": config.VERSION})
 
-        if 'new_version' in result:
+        if "new_version" in result:
             title = "Your version of the application is outdated"
             text = "Please download the <a href='{}'>recent version {}</a>".format(
-                result['url'],
-                result['new_version']
+                result["url"],
+                result["new_version"]
                 )
             QtGui.QMessageBox.critical(None, title, text)
             self.close()
@@ -65,15 +65,15 @@ class ConnectingWindow(QtGui.QMainWindow):
 
     def checkToken(self):
         token = models.getLoginToken()
-        result = post('check_login_token', {'token': token})
-        error = result.get('error')
+        result = post("check_login_token", {"token": token})
+        error = result.get("error")
 
-        if error == 'Invalid token':
+        if error == "Invalid token":
             login_window.show()
             self.close()
 
         elif error:
-            QtGui.QMessageBox.critical(None, 'Error message from the server', error)
+            QtGui.QMessageBox.critical(None, "Error message from the server", error)
             self.close()
 
         else:
@@ -117,18 +117,18 @@ class LoginWindow(QtGui.QMainWindow):
     def logIn(self):
         username = self.edit_name.text()
         password = self.edit_pass.text()
-        result = post('log_in', {'username': username, 'password': password})
+        result = post("log_in", {"username": username, "password": password})
 
-        if result.get('error') == 'Invalid username or password':
-            text = 'Invalid username or password'
+        if result.get("error") == "Invalid username or password":
+            text = "Invalid username or password"
             QtGui.QMessageBox.critical(None, text, text)
 
-        elif result.get('error'):
-            QtGui.QMessageBox.critical(None, 'Error message from the server', result['error'])
+        elif result.get("error"):
+            QtGui.QMessageBox.critical(None, "Error message from the server", result["error"])
             self.close()
 
         else:
-            models.setLoginToken(result['token'])
+            models.setLoginToken(result["token"])
             connecting_window.show()
             QtCore.QTimer().singleShot(500, connecting_window.checkToken)
             self.close()
@@ -187,7 +187,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.setCurrentIndex(index)
 
     def createButtons(self):
-        button_add = createButton(u'&Add new file', 'list-add.png', self.onNewFileClicked)
+        button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(button_add)
@@ -200,7 +200,7 @@ class MainWindow(QtGui.QMainWindow):
 
 class TableModel(QtCore.QAbstractTableModel):
 
-    header = ['ID', 'Project Name', 'Form name', 'Type', 'Status', 'Project token', 'Path']
+    header = ["ID", "Project Name", "Form name", "Type", "Status", "Project token", "Path"]
 
     def __init__(self):
         super(TableModel, self).__init__()
@@ -208,7 +208,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def loadRows(self):
         self.rows = [
-            (p.id, p.name, p.form_name, p.type_name, '..', p.project_token, p.path)
+            (p.id, p.name, p.form_name, p.type_name, "..", p.project_token, p.path)
             for p in models.getProjects()
             ]
 
@@ -313,7 +313,7 @@ def createButton(text, icon_name, func):
     button.connect(button, QtCore.SIGNAL("clicked()"), func)
 
     if icon_name:
-        icon = QtGui.QIcon(os.path.join('images', icon_name))
+        icon = QtGui.QIcon(os.path.join("images", icon_name))
         button.setIcon(icon)
 
     return button
@@ -324,13 +324,13 @@ def createButton(text, icon_name, func):
 
 
 def getProjectToken(name, form_name, type_name):
-    result = post('get_project_token', {'name': name, 'form_name': form_name, 'type_name': type_name})
+    result = post("get_project_token", {"name": name, "form_name": form_name, "type_name": type_name})
 
-    if result.get('error'):
-        QtGui.QMessageBox.critical(None, 'Error message from the server', result['error'])
+    if result.get("error"):
+        QtGui.QMessageBox.critical(None, "Error message from the server", result["error"])
 
     else:
-        return result['project_token']
+        return result["project_token"]
 
 
 def post(route, data):
@@ -338,14 +338,14 @@ def post(route, data):
         return post_core(route, data)
 
     except Exception, e:
-        QtGui.QMessageBox.critical(None, 'Error happened', str(e))
+        QtGui.QMessageBox.critical(None, "Error happened", str(e))
         raise
 
 
 def post_core(route, data):
-    url = '{}/{}'.format(config.API_URL, route)
+    url = "{}/{}".format(config.API_URL, route)
     json_data = json.dumps(data)
-    headers = {'content-type': 'application/json'}
+    headers = {"content-type": "application/json"}
 
     r = requests.post(url, data=json_data, headers=headers)
 
