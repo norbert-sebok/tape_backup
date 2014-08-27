@@ -21,15 +21,16 @@ class ProcessManager(object):
         self.processes = []
         self.running = False
 
-    def runProcess(self, process):
+    def addProcess(self, process):
         self.processes.append(process)
 
+    def runProcesses(self):
         if not self.running:
             self.running = True
-            self.runProcesses()
+            self.runProcessesCore()
             self.running = False
 
-    def runProcesses(self):
+    def runProcessesCore(self):
         while True:
             for p in self.processes:
                 p.runOneStep()

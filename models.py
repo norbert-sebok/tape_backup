@@ -112,6 +112,13 @@ def setInProgress(project, in_progress):
     session.commit()
 
 
+def stopProject(project):
+    project.in_progress = False
+    project.status = "Stopped"
+    session.add(project)
+    session.commit()
+
+
 def hasInProgress():
     return bool(session.query(Project).filter(Project.in_progress==True).all())
 

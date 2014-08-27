@@ -147,8 +147,8 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle(u"Cool name for the app")
         self.setSizeAndPosition(800, 600)
 
-        self.createTable()
         self.createButtons()
+        self.createTable()
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.view)
@@ -176,15 +176,25 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
 
+        self.view.connect(
+            self.view.selectionModel(),
+            QtCore.SIGNAL("currentChanged(const QModelIndex &, const QModelIndex &)"),
+            self.enableDisableButtons)
+        self.enableDisableButtons()
+
     def reloadTable(self, project_id=None):
+        if not project_id:
+            project = self.getCurrentProject()
+            if project:
+                project_id = project.id
+
         self.model.loadRows()
         self.model.reset()
 
-        if not project_id:
-            project_id = self.getCurrentProject().id
-
         if project_id:
             self.selectById(project_id)
+
+        self.enableDisableButtons()
 
     def selectById(self, id):
         count = self.getCountById(id)
@@ -204,13 +214,23 @@ class MainWindow(QtGui.QMainWindow):
         return project
 
     def createButtons(self):
-        button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
-        button_valid = createButton(u"&Validate", "gtk-apply.png", self.onValidateClicked)
+        self.button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
+        self.button_valid = createButton(u"&Validate", "gtk-apply.png", self.onValidateClicked)
+        self.button_stop = createButton(u"&Stop", "edit-delete-orig.png", self.onStopClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
-        self.buttons_layout.addWidget(button_add)
-        self.buttons_layout.addWidget(button_valid)
+        self.buttons_layout.addWidget(self.button_add)
+        self.buttons_layout.addWidget(self.button_valid)
+        self.buttons_layout.addWidget(self.button_stop)
         self.buttons_layout.addStretch()
+
+    def enableDisableButtons(self):
+        project = self.getCurrentProject()
+        in_progress = (project and project.in_progress)
+
+        print "enableDisableButtons", in_progress
+        self.button_valid.setEnabled(not in_progress)
+        self.button_stop.setEnabled(in_progress)
 
     def onNewFileClicked(self):
         login_token = models.getLoginToken()
@@ -230,7 +250,15 @@ class MainWindow(QtGui.QMainWindow):
             models.setValidation(project, result["validation"])
 
             process = processes.ValidationProcess(project, self.updateStatus)
-            manager.runProcess(process)
+            manager.addProcess(process)
+            QtCore.QTimer().singleShot(10, manager.runProcesses)
+
+            self.enableDisableButtons()
+
+    def onStopClicked(self):
+        project = self.getCurrentProject()
+        models.stopProject(project)
+        self.reloadTable()
 
     def updateStatus(self, project, status):
         count = self.getCountById(project.id)
@@ -327,7 +355,7 @@ class NewFileWindow(QtGui.QMainWindow):
     def onCreate(self):
         name = self.edit_name.text()
         form_name = self.drop_form.currentText()
-        type_name = "Real time"
+        type_name = "File"
 
         checks = [
             (name, "Please set the project name", self.edit_name),
