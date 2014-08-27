@@ -35,6 +35,7 @@ class Project(Base):
     type_name = Column(String)
     path = Column(String)
     project_token = Column(String)
+    validation = Column(String)
 
 
 # -----------------------------------------------------------------------------
@@ -88,6 +89,12 @@ def addProject(name, form_name, type_name, path, project_token):
 def getProjects():
     return session.query(Project).all()
 
+
+def setValidation(project, validation):
+    project.validation = validation
+    session.add(project)
+    session.commit()
+    
 
 # -----------------------------------------------------------------------------
 # ENGINE
