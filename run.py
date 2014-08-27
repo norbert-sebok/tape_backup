@@ -3,7 +3,6 @@
 
 # Standard library imports
 import json
-import operator
 import os
 import sys
 
@@ -184,7 +183,7 @@ class MainWindow(QtGui.QMainWindow):
     def selectById(self, id):
         for count, row in enumerate(self.model.rows):
             if row[0] == id:
-                index =  self.model.createIndex(count,0)
+                index = self.model.createIndex(count, 0)
                 self.view.setCurrentIndex(index)
 
     def createButtons(self):
@@ -314,7 +313,7 @@ def createButton(text, icon_name, func):
     button.connect(button, QtCore.SIGNAL("clicked()"), func)
 
     if icon_name:
-        icon = QtGui.QIcon( os.path.join('images', icon_name) )
+        icon = QtGui.QIcon(os.path.join('images', icon_name))
         button.setIcon(icon)
 
     return button
@@ -331,7 +330,7 @@ def getProjectToken(name, form_name, type_name):
         QtGui.QMessageBox.critical(None, 'Error message from the server', result['error'])
 
     else:
-        return result['project_token']    
+        return result['project_token']
 
 
 def post(route, data):
