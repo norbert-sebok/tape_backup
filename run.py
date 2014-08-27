@@ -239,7 +239,7 @@ class MainWindow(QtGui.QMainWindow):
         self.button_valid.setEnabled(exists and not in_progress)
         self.button_continue.setEnabled(paused)
         self.button_pause.setEnabled(in_progress and not paused)
-        self.button_stop.setEnabled(in_progress and not paused)
+        self.button_stop.setEnabled(in_progress)
 
     def onNewFileClicked(self):
         login_token = models.getLoginToken()
@@ -271,6 +271,7 @@ class MainWindow(QtGui.QMainWindow):
     def onContinueClicked(self):
         project = self.getCurrentProject()
         manager.continueProcess(project)
+        QtCore.QTimer().singleShot(10, manager.runProcesses)
         self.reloadTable()
         self.view.setFocus()
 

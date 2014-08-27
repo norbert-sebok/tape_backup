@@ -38,7 +38,6 @@ class ProcessManager(object):
         for process in self.processes:
             if process.project == project:
                 process.continueProcess()
-                self.runProcesses()
 
     def runProcesses(self):
         if not self.running:
