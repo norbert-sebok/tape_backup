@@ -170,6 +170,9 @@ class MainWindow(QtGui.QMainWindow):
         self.model.loadRows()
         self.model.reset()
 
+        if not project_id:
+            project_id = self.getCurrentProject().id
+
         if project_id:
             self.selectById(project_id)
 
