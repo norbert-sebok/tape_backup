@@ -44,6 +44,7 @@ class Project(Base):
     paused = Column(Boolean)
 
     records_validated = Column(Integer)
+    records_invalid = Column(Integer)
     records_chunked = Column(Integer)
     records_uploaded = Column(Integer)
 
@@ -87,7 +88,8 @@ def addProject(name, form_name, type_name, path, project_token):
         form_name=form_name,
         type_name=type_name,
         path=path,
-        project_token=project_token
+        project_token=project_token,
+        status="Waiting for validation"
         )
 
     session.add(project)
@@ -172,6 +174,11 @@ path = os.path.join(config.DB_FOLDER, 'main.db')
 engine = create_engine('sqlite:///{}'.format(path))
 
 Base.metadata.create_all(engine)
+
+
+def commit(obj):
+    session.add(obj)
+    session.commit()
 
 
 # -----------------------------------------------------------------------------

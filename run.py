@@ -198,6 +198,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.model.loadRows()
         self.model.reset()
+        self.view.resizeColumnsToContents()
 
         if project_id:
             self.selectById(project_id)
@@ -274,7 +275,7 @@ class MainWindow(QtGui.QMainWindow):
         if not error:
             models.setValidation(project, result["validation"])
 
-            process = processes.ValidationProcess(project, self.updateStatus, self.reloadTable)
+            process = processes.ValidationProcess(project, self.updateRow)
             manager.addProcess(process)
             QtCore.QTimer().singleShot(10, manager.runProcesses)
 
@@ -285,7 +286,7 @@ class MainWindow(QtGui.QMainWindow):
     def onSplitClicked(self):
         project = self.getCurrentProject()
 
-        process = processes.SplitToChunksProcess(project, self.updateStatus, self.reloadTable)
+        process = processes.SplitToChunksProcess(project, self.updateRow)
         manager.addProcess(process)
         QtCore.QTimer().singleShot(10, manager.runProcesses)
 
@@ -311,31 +312,41 @@ class MainWindow(QtGui.QMainWindow):
         self.reloadTable()
         self.view.setFocus()
 
-    def updateStatus(self, project, status):
+    def updateRow(self, project):
         count = self.getCountById(project.id)
+
         if count is not None:
-            self.model.rows[count][self.model.status_index] = status
-            self.model.dataChanged.emit(count, self.model.status_index)
+            row = self.model.loadRow(project)
+            self.model.rows[count] = row
+    
+            for index, _ in enumerate(row):
+                self.model.dataChanged.emit(count, index)
+
+        self.view.resizeColumnsToContents()
 
 
 class TableModel(QtCore.QAbstractTableModel):
 
     header = [
         "ID", "Project Name", "Form name", "Type", "Status",
-        "Validated", "Chunked", "Uploaded", "Path"
+        "Validated", "Invalid", "Chunked", "Uploaded", "Path"
         ]
-    status_index = 4
 
     def __init__(self):
         super(TableModel, self).__init__()
         self.loadRows()
 
     def loadRows(self):
-        self.rows = [
-            [p.id, p.name, p.form_name, p.type_name, p.status,
-             p.records_validated, p.records_chunked, p.records_uploaded,
-             p.path, p]
-            for p in models.getProjects()
+        self.rows = [self.loadRow(p) for p in models.getProjects()]
+
+    def loadRow(self, p):
+        validated = "{:,}".format(p.records_validated)
+        invalid = "{:,}".format(p.records_invalid)
+        chunked = "{:,}".format(p.records_chunked)
+
+        return [
+            p.id, p.name, p.form_name, p.type_name, p.status,
+            validated, invalid, chunked, p.records_uploaded, p.path, p
             ]
 
     def rowCount(self, parent):
@@ -347,9 +358,17 @@ class TableModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         if not index.isValid():
             return None
-        elif role != QtCore.Qt.DisplayRole:
-            return None
-        else:
+
+        elif role == QtCore.Qt.TextAlignmentRole:
+            col = index.column()
+            title = self.header[col]
+    
+            if title in ("Validated", "Invalid", "Chunked"):
+                return int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
+            else:
+                return int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
+
+        elif role == QtCore.Qt.DisplayRole:
             return self.rows[index.row()][index.column()]
 
     def headerData(self, col, orientation, role):

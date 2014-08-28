@@ -76,10 +76,9 @@ class ProcessManager(object):
 
 class Process(object):
 
-    def __init__(self, project, updateStatus, reloadTable):
+    def __init__(self, project, updateRow):
         self.project = project
-        self.updateStatus = updateStatus
-        self.reloadTable = reloadTable
+        self.updateRow = updateRow
 
         self.running = True
         self.paused = False
@@ -110,12 +109,14 @@ class Process(object):
         pass
 
     def markAsFinished(self):
-        models.setInProgress(self.project, False)
-
         self.finished = True
         self.running = False
 
-        self.reloadTable()
+        self.project.in_progress = False
+        self.project.status = "Waiting for uploading"
+        models.commit(self.project)
+
+        self.updateRow(self.project)
 
 
 # -----------------------------------------------------------------------------
@@ -124,11 +125,11 @@ class Process(object):
 
 class ValidationProcess(Process):
 
-    def __init__(self, project, updateStatus, reloadTable):
+    def __init__(self, project, updateRow):
         self.validators = getValidators(project)
         self.errors = {count: 0 for count, _ in enumerate(self.validators)}
 
-        super(ValidationProcess, self).__init__(project, updateStatus, reloadTable)
+        super(ValidationProcess, self).__init__(project, updateRow)
 
     def runProcess(self):
         with open(self.project.path) as f:
@@ -151,10 +152,13 @@ class ValidationProcess(Process):
         if count % 1000 == 0:
             invalid = sum(self.errors.values())
             valid = count - invalid
-            status = "Validating rows: {:,} valid / {:,} invalid".format(valid, invalid)
 
-            models.setStatus(self.project, status)
-            self.updateStatus(self.project, status)
+            self.project.status = "Validating..."
+            self.project.records_validated = valid
+            self.project.records_invalid = invalid
+            models.commit(self.project)
+
+            self.updateRow(self.project)
 
 
 def getValidators(project):
@@ -201,10 +205,10 @@ class SplitToChunksProcess(Process):
 
     rows_per_chunk = 400
 
-    def __init__(self, project, updateStatus, reloadTable):
+    def __init__(self, project, updateRow):
         self.converters = getConverters(project)
 
-        super(SplitToChunksProcess, self).__init__(project, updateStatus, reloadTable)
+        super(SplitToChunksProcess, self).__init__(project, updateRow)
 
     def runProcess(self):
         self.chunk_count = 0
@@ -250,10 +254,12 @@ class SplitToChunksProcess(Process):
 
     def calcStatus(self):
         rows = self.chunk_count * self.rows_per_chunk
-        status = "Split {:,} chunks for {:,} rows".format(self.chunk_count, rows)
 
-        models.setStatus(self.project, status)
-        self.updateStatus(self.project, status)
+        self.project.status = "Chunking..."
+        self.project.records_chunked = rows
+        models.commit(self.project)
+
+        self.updateRow(self.project)
 
 
 def getConverters(project):
