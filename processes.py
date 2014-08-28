@@ -113,7 +113,6 @@ class Process(object):
         self.running = False
 
         self.project.in_progress = False
-        self.project.status = "Waiting for uploading"
         models.commit(self.project)
 
         self.updateRow(self.project)
@@ -137,28 +136,32 @@ class ValidationProcess(Process):
 
             for count, row in enumerate(reader):
                 validateRow(self.validators, row, self.errors)
-                self.calcStatus(count + 1)
+
+                if (count + 1) % 1000 == 0:
+                    self.calcStatus(count)
 
                 if count % 100 == 0:
                     yield
 
         invalid = sum(self.errors.values())
         if not invalid:
-            models.setValidated(self.project)
+            self.project.validated = True
+            self.project.status = "Waiting for chunking"
+            models.commit(self.project)
 
+        self.calcStatus(count)
         self.markAsFinished()
 
     def calcStatus(self, count):
-        if count % 1000 == 0:
-            invalid = sum(self.errors.values())
-            valid = count - invalid
+        invalid = sum(self.errors.values())
+        valid = count + 1 - invalid
 
-            self.project.status = "Validating..."
-            self.project.records_validated = valid
-            self.project.records_invalid = invalid
-            models.commit(self.project)
+        self.project.status = "Validating..."
+        self.project.records_validated = valid
+        self.project.records_invalid = invalid
+        models.commit(self.project)
 
-            self.updateRow(self.project)
+        self.updateRow(self.project)
 
 
 def getValidators(project):
@@ -229,6 +232,11 @@ class SplitToChunksProcess(Process):
             if chunk:
                 self.processChunk(chunk)
 
+        self.project.chunked = True
+        self.project.status = "Waiting for uploading"
+        models.commit(self.project)
+
+        self.calcStatus()
         self.markAsFinished()
 
     def processChunk(self, chunk):

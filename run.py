@@ -243,18 +243,20 @@ class MainWindow(QtGui.QMainWindow):
         self.buttons_layout.addStretch()
 
     def enableDisableButtons(self):
-        project = self.getCurrentProject()
+        p = self.getCurrentProject()
 
-        exists = bool(project)
-        in_progress = bool(project and project.in_progress)
-        validated = bool(project and project.validated)
-        paused = bool(project and project.paused)
-
-        self.button_valid.setEnabled(exists and not in_progress and not validated)
-        self.button_split.setEnabled(validated)
-        self.button_continue.setEnabled(paused)
-        self.button_pause.setEnabled(in_progress and not paused)
-        self.button_stop.setEnabled(in_progress)
+        if p:
+            self.button_valid.setEnabled(bool(not p.in_progress and not p.validated))
+            self.button_split.setEnabled(bool(p.validated and not p.chunked))
+            self.button_continue.setEnabled(bool(p.paused))
+            self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
+            self.button_stop.setEnabled(bool(p.in_progress))
+        else:
+            self.button_valid.setEnabled(True)
+            self.button_split.setEnabled(False)
+            self.button_continue.setEnabled(False)
+            self.button_pause.setEnabled(False)
+            self.button_stop.setEnabled(False)
 
     def onNewFileClicked(self):
         login_token = models.getLoginToken()
@@ -340,13 +342,14 @@ class TableModel(QtCore.QAbstractTableModel):
         self.rows = [self.loadRow(p) for p in models.getProjects()]
 
     def loadRow(self, p):
-        validated = "{:,}".format(p.records_validated)
-        invalid = "{:,}".format(p.records_invalid)
-        chunked = "{:,}".format(p.records_chunked)
+        validated = "{:,}".format(p.records_validated or 0)
+        invalid = "{:,}".format(p.records_invalid or 0)
+        chunked = "{:,}".format(p.records_chunked or 0)
+        uploaded = "{:,}".format(p.records_uploaded or 0)
 
         return [
             p.id, p.name, p.form_name, p.type_name, p.status,
-            validated, invalid, chunked, p.records_uploaded, p.path, p
+            validated, invalid, chunked, uploaded, p.path, p
             ]
 
     def rowCount(self, parent):

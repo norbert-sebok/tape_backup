@@ -41,6 +41,7 @@ class Project(Base):
     status = Column(String)
     in_progress = Column(Boolean)
     validated = Column(Boolean)
+    chunked = Column(Boolean)
     paused = Column(Boolean)
 
     records_validated = Column(Integer)
