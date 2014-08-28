@@ -2,6 +2,7 @@
 # IMPORTS
 
 # Standard library imports
+import calendar
 import csv
 import datetime
 import json
@@ -200,6 +201,11 @@ class SplitToChunksProcess(Process):
 
     rows_per_chunk = 400
 
+    def __init__(self, project, updateStatus, reloadTable):
+        self.converters = getConverters(project)
+
+        super(SplitToChunksProcess, self).__init__(project, updateStatus, reloadTable)
+
     def runProcess(self):
         self.chunk_count = 0
 
@@ -229,11 +235,18 @@ class SplitToChunksProcess(Process):
         name = "{:09d}.json".format(self.chunk_count)
         path = os.path.join(folder, name+'.zip')
 
-        data = json.dumps(chunk)
+        data = self.convertedRows(chunk)
+        json_str = json.dumps(data)
         with zipfile.ZipFile(path, mode='w') as z:
-            z.writestr(name, data)
+            z.writestr(name, json_str)
 
         self.chunk_count += 1
+
+    def convertedRows(self, rows):
+        return [self.convertedRow(row) for row in rows]
+
+    def convertedRow(self, row):
+        return [func(value) for func, value in zip(self.converters, row)]
 
     def calcStatus(self):
         rows = self.chunk_count * self.rows_per_chunk
@@ -241,6 +254,28 @@ class SplitToChunksProcess(Process):
 
         models.setStatus(self.project, status)
         self.updateStatus(self.project, status)
+
+
+def getConverters(project):
+    d = {
+        'number': convertNumber,
+        'text': convertText,
+        'datetimestamp': convertStamp
+        }
+
+    return [d[v] for v in project.validation.split(',')]
+
+
+def convertNumber(value):
+    return float(value)
+
+
+def convertStamp(value):
+    return datetime.datetime.strptime(value, '%Y-%m-%d').isoformat()
+
+
+def convertText(value):
+    return value
 
 
 # -----------------------------------------------------------------------------
