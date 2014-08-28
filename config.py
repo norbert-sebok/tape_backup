@@ -10,3 +10,6 @@ LOGO_PATH = "images/logo.png"
 
 # The folder of the database file(s)
 DB_FOLDER = "db"
+
+# The folder of the chunk files
+CHUNK_FOLDER = "chunk"

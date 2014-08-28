@@ -286,7 +286,14 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setFocus()
 
     def onSplitClicked(self):
-        pass
+        project = self.getCurrentProject()
+
+        process = processes.SplitToChunksProcess(project, self.updateStatus, self.reloadTable)
+        manager.addProcess(process)
+        QtCore.QTimer().singleShot(10, manager.runProcesses)
+
+        self.enableDisableButtons()
+        self.view.setFocus()
 
     def onContinueClicked(self):
         project = self.getCurrentProject()

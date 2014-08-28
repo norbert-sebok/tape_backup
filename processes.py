@@ -4,10 +4,14 @@
 # Standard library imports
 import csv
 import datetime
+import json
+import os
+import zipfile
 
 # Related third party imports
 
 # Local application/library specific imports
+import config
 import models
 
 # -----------------------------------------------------------------------------
@@ -67,18 +71,14 @@ class ProcessManager(object):
 
 
 # -----------------------------------------------------------------------------
-# VALIDATION PROCESS
+# PROCESS
 
-
-class ValidationProcess(object):
+class Process(object):
 
     def __init__(self, project, updateStatus, reloadTable):
         self.project = project
         self.updateStatus = updateStatus
         self.reloadTable = reloadTable
-
-        self.validators = getValidators(project)
-        self.errors = {count: 0 for count, _ in enumerate(self.validators)}
 
         self.running = True
         self.paused = False
@@ -106,6 +106,30 @@ class ValidationProcess(object):
             models.setInProgress(self.project, False)
 
     def runProcess(self):
+        pass
+
+    def markAsFinished(self):
+        models.setInProgress(self.project, False)
+
+        self.finished = True
+        self.running = False
+
+        self.reloadTable()
+
+
+# -----------------------------------------------------------------------------
+# VALIDATION PROCESS
+
+
+class ValidationProcess(Process):
+
+    def __init__(self, project, updateStatus, reloadTable):
+        self.validators = getValidators(project)
+        self.errors = {count: 0 for count, _ in enumerate(self.validators)}
+
+        super(ValidationProcess, self).__init__(project, updateStatus, reloadTable)
+
+    def runProcess(self):
         with open(self.project.path) as f:
             reader = csv.reader(f, delimiter=',', quotechar='"')
 
@@ -116,16 +140,11 @@ class ValidationProcess(object):
                 if count % 100 == 0:
                     yield
 
-        models.setInProgress(self.project, False)
-
         invalid = sum(self.errors.values())
         if not invalid:
             models.setValidated(self.project)
 
-        self.finished = True
-        self.running = False
-
-        self.reloadTable()
+        self.markAsFinished()
 
     def calcStatus(self, count):
         if count % 1000 == 0:
@@ -171,6 +190,57 @@ def validateStamp(value):
 
 def validateText(value):
     return True
+
+
+# -----------------------------------------------------------------------------
+# SPLIT TO CHUNKS PROCESS
+
+
+class SplitToChunksProcess(Process):
+
+    rows_per_chunk = 400
+
+    def runProcess(self):
+        self.chunk_count = 0
+
+        with open(self.project.path) as f:
+            reader = csv.reader(f, delimiter=',', quotechar='"')
+
+            chunk = []
+            for row in reader:
+                chunk.append(row)
+
+                if len(chunk) == self.rows_per_chunk:
+                    self.processChunk(chunk)
+                    self.calcStatus()
+                    chunk = []
+                    yield
+
+            if chunk:
+                self.processChunk(chunk)
+
+        self.markAsFinished()
+
+    def processChunk(self, chunk):
+        folder = os.path.join(config.CHUNK_FOLDER, str(self.project.id))
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        name = "{:09d}.json".format(self.chunk_count)
+        path = os.path.join(folder, name+'.zip')
+
+        data = json.dumps(chunk)
+        with zipfile.ZipFile(path, mode='w') as z:
+            z.writestr(name, data)
+
+        self.chunk_count += 1
+
+    def calcStatus(self):
+        rows = self.chunk_count * self.rows_per_chunk
+        status = "Split {:,} chunks for {:,} rows".format(self.chunk_count, rows)
+
+        models.setStatus(self.project, status)
+        self.updateStatus(self.project, status)
 
 
 # -----------------------------------------------------------------------------
