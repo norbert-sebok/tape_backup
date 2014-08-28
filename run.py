@@ -228,15 +228,19 @@ class MainWindow(QtGui.QMainWindow):
     def createButtons(self):
         self.button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
         self.button_valid = createButton(u"&Validate", "gtk-apply.png", self.onValidateClicked)
+        self.button_split = createButton(u"Split &to chunks", "accessories.png", self.onSplitClicked)
         self.button_continue = createButton(u"&Continue", "media-start.png", self.onContinueClicked)
         self.button_pause = createButton(u"&Pause", "media-pause.png", self.onPauseClicked)
         self.button_stop = createButton(u"&Stop", "media-stop.png", self.onStopClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.button_add)
+        self.buttons_layout.addSpacing(10)
         self.buttons_layout.addWidget(self.button_valid)
-        self.buttons_layout.addWidget(self.button_continue)
+        self.buttons_layout.addWidget(self.button_split)
+        self.buttons_layout.addSpacing(10)
         self.buttons_layout.addWidget(self.button_pause)
+        self.buttons_layout.addWidget(self.button_continue)
         self.buttons_layout.addWidget(self.button_stop)
         self.buttons_layout.addStretch()
 
@@ -245,9 +249,11 @@ class MainWindow(QtGui.QMainWindow):
 
         exists = bool(project)
         in_progress = bool(project and project.in_progress)
+        validated = bool(project and project.validated)
         paused = bool(project and project.paused)
 
-        self.button_valid.setEnabled(exists and not in_progress)
+        self.button_valid.setEnabled(exists and not in_progress and not validated)
+        self.button_split.setEnabled(validated)
         self.button_continue.setEnabled(paused)
         self.button_pause.setEnabled(in_progress and not paused)
         self.button_stop.setEnabled(in_progress)
@@ -271,13 +277,16 @@ class MainWindow(QtGui.QMainWindow):
         if not error:
             models.setValidation(project, result["validation"])
 
-            process = processes.ValidationProcess(project, self.updateStatus)
+            process = processes.ValidationProcess(project, self.updateStatus, self.reloadTable)
             manager.addProcess(process)
             QtCore.QTimer().singleShot(10, manager.runProcesses)
 
             self.enableDisableButtons()
 
         self.view.setFocus()
+
+    def onSplitClicked(self):
+        pass
 
     def onContinueClicked(self):
         project = self.getCurrentProject()
