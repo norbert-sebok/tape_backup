@@ -72,9 +72,10 @@ class ProcessManager(object):
 
 class ValidationProcess(object):
 
-    def __init__(self, project, updateGui):
+    def __init__(self, project, updateStatus, reloadTable):
         self.project = project
-        self.updateGui = updateGui
+        self.updateStatus = updateStatus
+        self.reloadTable = reloadTable
 
         self.validators = getValidators(project)
         self.errors = {count: 0 for count, _ in enumerate(self.validators)}
@@ -110,22 +111,30 @@ class ValidationProcess(object):
 
             for count, row in enumerate(reader):
                 validateRow(self.validators, row, self.errors)
-                self.updateStatus(count + 1)
+                self.calcStatus(count + 1)
 
                 if count % 100 == 0:
                     yield
 
+        models.setInProgress(self.project, False)
+
+        invalid = sum(self.errors.values())
+        if not invalid:
+            models.setValidated(self.project)
+
         self.finished = True
         self.running = False
 
-    def updateStatus(self, count):
+        self.reloadTable()
+
+    def calcStatus(self, count):
         if count % 1000 == 0:
             invalid = sum(self.errors.values())
             valid = count - invalid
             status = "Validating rows: {:,} valid / {:,} invalid".format(valid, invalid)
 
             models.setStatus(self.project, status)
-            self.updateGui(self.project, status)
+            self.updateStatus(self.project, status)
 
 
 def getValidators(project):

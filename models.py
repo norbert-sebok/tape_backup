@@ -38,9 +38,10 @@ class Project(Base):
     project_token = Column(String)
     validation = Column(String)
 
-    in_progress = Column(Boolean)
-    paused = Column(Boolean)
     status = Column(String)
+    in_progress = Column(Boolean)
+    validated = Column(Boolean)
+    paused = Column(Boolean)
 
 
 # -----------------------------------------------------------------------------
@@ -109,6 +110,13 @@ def setStatus(project, status):
 
 def setInProgress(project, in_progress):
     project.in_progress = in_progress
+    session.add(project)
+    session.commit()
+
+
+def setValidated(project):
+    project.validated = True
+    project.status = "Validated"
     session.add(project)
     session.commit()
 
