@@ -322,7 +322,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     header = [
         "ID", "Project Name", "Form name", "Type", "Status",
-        "Validated", "Chunked", "Uploaded", "Project token", "Path"
+        "Validated", "Chunked", "Uploaded", "Path"
         ]
     status_index = 4
 
@@ -334,7 +334,7 @@ class TableModel(QtCore.QAbstractTableModel):
         self.rows = [
             [p.id, p.name, p.form_name, p.type_name, p.status,
              p.records_validated, p.records_chunked, p.records_uploaded,
-             p.project_token, p.path, p]
+             p.path, p]
             for p in models.getProjects()
             ]
 
