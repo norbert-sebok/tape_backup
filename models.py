@@ -43,6 +43,10 @@ class Project(Base):
     validated = Column(Boolean)
     paused = Column(Boolean)
 
+    records_validated = Column(Integer)
+    records_chunked = Column(Integer)
+    records_uploaded = Column(Integer)
+
 
 # -----------------------------------------------------------------------------
 # FUNCTIONS - CONFIG

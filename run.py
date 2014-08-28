@@ -2,9 +2,6 @@
 # IMPORTS
 
 # Standard library imports
-import csv
-import datetime
-import functools
 import json
 import os
 import sys
@@ -272,7 +269,7 @@ class MainWindow(QtGui.QMainWindow):
     def onValidateClicked(self):
         project = self.getCurrentProject()
         login_token = models.getLoginToken()
-        result, error = post("get_validations", {"login_token": login_token, 'form_name':project.form_name})
+        result, error = post("get_validations", {"login_token": login_token, 'form_name': project.form_name})
 
         if not error:
             models.setValidation(project, result["validation"])
@@ -316,14 +313,17 @@ class MainWindow(QtGui.QMainWindow):
 
     def updateStatus(self, project, status):
         count = self.getCountById(project.id)
-        if count != None:
+        if count is not None:
             self.model.rows[count][self.model.status_index] = status
             self.model.dataChanged.emit(count, self.model.status_index)
 
 
 class TableModel(QtCore.QAbstractTableModel):
 
-    header = ["ID", "Project Name", "Form name", "Type", "Status", "Project token", "Path"]
+    header = [
+        "ID", "Project Name", "Form name", "Type", "Status",
+        "Validated", "Chunked", "Uploaded", "Project token", "Path"
+        ]
     status_index = 4
 
     def __init__(self):
@@ -332,7 +332,9 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def loadRows(self):
         self.rows = [
-            [p.id, p.name, p.form_name, p.type_name, p.status, p.project_token, p.path, p]
+            [p.id, p.name, p.form_name, p.type_name, p.status,
+             p.records_validated, p.records_chunked, p.records_uploaded,
+             p.project_token, p.path, p]
             for p in models.getProjects()
             ]
 
