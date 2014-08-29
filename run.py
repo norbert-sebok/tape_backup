@@ -324,6 +324,7 @@ class MainWindow(QtGui.QMainWindow):
             for index, _ in enumerate(row):
                 self.model.dataChanged.emit(count, index)
 
+        self.enableDisableButtons()
         self.view.resizeColumnsToContents()
 
 
