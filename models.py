@@ -72,6 +72,7 @@ class Chunk(Base):
     project = relationship("Project", backref=backref('chunks', order_by=id))
 
     path = Column(String)
+    rows = Column(Integer)
     upload_id = Column(String)
 
     def save(self):
