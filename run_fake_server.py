@@ -4,6 +4,7 @@
 # Standard library imports
 import collections
 import json
+import random
 import uuid
 
 # Related third party imports
@@ -111,8 +112,10 @@ def upload_rows():
 
     if isValidLoginToken(login_token):
         upload_id = str(uuid.uuid4())
-        upload_ids[project_token].append(upload_id)
         result = {'uploaded': len(rows), 'upload_id': upload_id}
+
+        if random.random() > 0.05:
+            upload_ids[project_token].append(upload_id)
 
     else:
         result = {'error': 'Invalid login token'}
