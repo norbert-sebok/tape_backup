@@ -61,27 +61,15 @@ class Project(Base):
 # FUNCTIONS - CONFIG
 
 def getLoginToken():
-    return getConfig('login_token')
-
-
-def setLoginToken(value):
-    return setConfig('login_token', value)
-
-
-def getConfig(attr):
     config = session.query(Config).first()
 
     if config:
-        return getattr(config, attr)
+        return config.login_token
 
 
-def setConfig(attr, value):
-    config = session.query(Config).first()
-
-    if not config:
-        config = Config()
-
-    setattr(config, attr, value)
+def setLoginToken(value):
+    config = session.query(Config).first() or Config()
+    config.login_token = value
 
     session.add(config)
     session.commit()
