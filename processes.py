@@ -237,6 +237,7 @@ class SplitToChunksProcess(Process):
 
     def runProcess(self):
         self.chunk_count = 0
+        self.row_count = 0
 
         with open(self.project.path) as f:
             reader = csv.reader(f, delimiter=str(self.project.delimiter))
@@ -265,22 +266,24 @@ class SplitToChunksProcess(Process):
         name = "{:09d}.json.zip".format(self.chunk_count)
         path = os.path.join(self.project.chunks_folder, name)
 
-        data = self.convertedRows(chunk)
+        data = list(self.convertedRows(chunk))
         json_str = json.dumps(data)
         with zipfile.ZipFile(path, mode='w') as z:
             z.writestr('chunk.csv', json_str)
 
         self.chunk_count += 1
+        self.row_count += len(data)
 
     def convertedRows(self, rows):
-        return [self.convertedRow(row) for row in rows]
-
-    def convertedRow(self, row):
-        return [func(value) for func, value in zip(self.converters, row)]
+        for row in rows:
+            try:
+                yield [func(value) for func, value in zip(self.converters, row)]
+            except:
+                pass
 
     def calcStatus(self):
         self.project.status = "Chunking..."
-        self.project.records_chunked = self.chunk_count * self.rows_per_chunk
+        self.project.records_chunked = self.row_count
         self.project.save()
 
 
