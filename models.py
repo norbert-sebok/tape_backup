@@ -97,27 +97,6 @@ def getProjects():
     return session.query(Project).all()
 
 
-def setValidation(project, validation):
-    project.validation = validation
-    project.save()
-
-
-def setStatus(project, status):
-    project.status = status
-    project.save()
-
-
-def setInProgress(project, in_progress):
-    project.in_progress = in_progress
-    project.save()
-
-
-def setValidated(project):
-    project.validated = True
-    project.status = "Validated"
-    project.save()
-
-
 def clearBrokenProjectsOnAppStart():
     projects = session.query(Project).filter(Project.in_progress==True).all()
     projects += session.query(Project).filter(Project.paused==True).all()
@@ -127,23 +106,6 @@ def clearBrokenProjectsOnAppStart():
         project.paused = False
         project.status = "Broken"
         project.save()
-
-
-def stopProject(project):
-    project.in_progress = False
-    project.status += " stopped"
-    project.save()
-
-
-def pauseProject(project):
-    project.paused = True
-    project.status += " paused"
-    project.save()
-
-
-def continueProject(project):
-    project.paused = False
-    project.save()
 
 
 def hasInProgress():

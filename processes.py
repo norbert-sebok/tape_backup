@@ -78,34 +78,41 @@ class Process(object):
 
     def __init__(self, project):
         self.project = project
+        self.project.in_progress = True
+        self.project.save()
 
         self.running = True
         self.paused = False
         self.finished = False
 
-        models.setInProgress(project, True)
         self.generator = self.runProcess()
-
-    def stopProcess(self):
-        self.running = False
-        models.stopProject(self.project)
-
-    def pauseProcess(self):
-        self.paused = True
-        models.pauseProject(self.project)
-
-    def continueProcess(self):
-        self.paused = False
-        models.continueProject(self.project)
 
     def runOneStep(self):
         try:
             self.generator.next()
         except StopIteration:
-            models.setInProgress(self.project, False)
+            self.project.in_progress = False
+            self.project.save()
 
     def runProcess(self):
         pass
+
+    def stopProcess(self):
+        self.running = False
+        self.project.in_progress = False
+        self.project.status += " stopped"
+        self.project.save()
+
+    def pauseProcess(self):
+        self.paused = True
+        self.project.paused = True
+        self.project.status += " paused"
+        self.project.save()
+
+    def continueProcess(self):
+        self.paused = False
+        self.project.paused = False
+        self.project.save()
 
     def markAsFinished(self):
         self.finished = True

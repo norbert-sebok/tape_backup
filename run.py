@@ -276,7 +276,8 @@ class MainWindow(QtGui.QMainWindow):
         result, error = post("get_validations", {"login_token": login_token, 'form_name': project.form_name})
 
         if not error:
-            models.setValidation(project, result["validation"])
+            project.validation = result["validation"]
+            project.save()
 
             process = processes.ValidationProcess(project)
             manager.addProcess(process)
