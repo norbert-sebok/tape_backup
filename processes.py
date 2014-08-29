@@ -100,6 +100,7 @@ class Process(object):
     def stopProcess(self):
         self.running = False
         self.project.in_progress = False
+        self.project.paused = False
         self.project.status += " stopped"
         self.project.save()
 
