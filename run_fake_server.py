@@ -2,6 +2,7 @@
 # IMPORTS
 
 # Standard library imports
+import collections
 import json
 import uuid
 
@@ -109,7 +110,23 @@ def upload_rows():
     rows = flask.request.json['rows']
 
     if isValidLoginToken(login_token):
-        result = {'uploaded': len(rows)}
+        upload_id = str(uuid.uuid4())
+        upload_ids[project_token].append(upload_id)
+        result = {'uploaded': len(rows), 'upload_id': upload_id}
+
+    else:
+        result = {'error': 'Invalid login token'}
+
+    return json.dumps(result)
+
+
+@app.route("/get_upload_ids", methods=['POST'])
+def get_upload_ids():
+    login_token = flask.request.json['login_token']
+    project_token = flask.request.json['project_token']
+
+    if isValidLoginToken(login_token):
+        result = {'upload_ids': upload_ids[project_token]}
     else:
         result = {'error': 'Invalid login token'}
 
@@ -126,6 +143,8 @@ def isValidLoginToken(login_token):
 
 # -----------------------------------------------------------------------------
 # MAIN
+
+upload_ids = collections.defaultdict(list)
 
 if __name__ == "__main__":
     app.run(debug=True)
