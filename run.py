@@ -260,6 +260,8 @@ class MainWindow(QtGui.QMainWindow):
             self.button_stop.setEnabled(False)
 
     def onNewFileClicked(self):
+        self.view.setFocus()
+
         login_token = models.getLoginToken()
         result, error = post("get_form_names", {"login_token": login_token})
 
@@ -268,9 +270,9 @@ class MainWindow(QtGui.QMainWindow):
             self.w = NewFileWindow(form_names)
             self.w.show()
 
+    def onValidateClicked(self):
         self.view.setFocus()
 
-    def onValidateClicked(self):
         project = self.getCurrentProject()
         if not project:
             return
@@ -288,9 +290,9 @@ class MainWindow(QtGui.QMainWindow):
 
             self.enableDisableButtons()
 
+    def onSplitClicked(self):
         self.view.setFocus()
 
-    def onSplitClicked(self):
         project = self.getCurrentProject()
 
         process = processes.SplitToChunksProcess(project)
@@ -298,26 +300,28 @@ class MainWindow(QtGui.QMainWindow):
         QtCore.QTimer().singleShot(10, manager.runProcesses)
 
         self.enableDisableButtons()
-        self.view.setFocus()
 
     def onContinueClicked(self):
+        self.view.setFocus()
+
         project = self.getCurrentProject()
         manager.continueProcess(project)
         QtCore.QTimer().singleShot(10, manager.runProcesses)
         self.reloadTable()
-        self.view.setFocus()
 
     def onPauseClicked(self):
+        self.view.setFocus()
+
         project = self.getCurrentProject()
         manager.pauseProcess(project)
         self.reloadTable()
-        self.view.setFocus()
 
     def onStopClicked(self):
+        self.view.setFocus()
+
         project = self.getCurrentProject()
         manager.stopProcess(project)
         self.reloadTable()
-        self.view.setFocus()
 
     def updateRow(self, project):
         count = self.getCountById(project.id)
