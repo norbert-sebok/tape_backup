@@ -44,6 +44,7 @@ class Project(Base):
     validated = Column(Boolean)
     chunked = Column(Boolean)
     paused = Column(Boolean)
+    uploaded = Column(Boolean)
 
     records_validated = Column(Integer)
     records_invalid = Column(Integer)

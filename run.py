@@ -154,7 +154,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def buildWidgets(self):
         self.setWindowTitle(u"Cool name for the app")
-        self.setSizeAndPosition(800, 600)
+        self.setSizeAndPosition(900, 600)
 
         self.createButtons()
         self.createTable()
@@ -228,16 +228,18 @@ class MainWindow(QtGui.QMainWindow):
         self.button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
         self.button_valid = createButton(u"&Validate", "gtk-apply.png", self.onValidateClicked)
         self.button_split = createButton(u"Split &to chunks", "accessories.png", self.onSplitClicked)
+        self.button_upload = createButton(u"&Upload", "internet.png", self.onUploadClicked)
         self.button_continue = createButton(u"&Continue", "media-start.png", self.onContinueClicked)
         self.button_pause = createButton(u"&Pause", "media-pause.png", self.onPauseClicked)
         self.button_stop = createButton(u"&Stop", "media-stop.png", self.onStopClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.button_add)
-        self.buttons_layout.addSpacing(10)
+        self.buttons_layout.addSpacing(12)
         self.buttons_layout.addWidget(self.button_valid)
         self.buttons_layout.addWidget(self.button_split)
-        self.buttons_layout.addSpacing(10)
+        self.buttons_layout.addWidget(self.button_upload)
+        self.buttons_layout.addSpacing(12)
         self.buttons_layout.addWidget(self.button_pause)
         self.buttons_layout.addWidget(self.button_continue)
         self.buttons_layout.addWidget(self.button_stop)
@@ -248,13 +250,15 @@ class MainWindow(QtGui.QMainWindow):
 
         if p:
             self.button_valid.setEnabled(bool(not p.in_progress and not p.validated))
-            self.button_split.setEnabled(bool(p.validated and not p.chunked))
+            self.button_split.setEnabled(bool(not p.in_progress and p.validated and not p.chunked))
+            self.button_upload.setEnabled(bool(not p.in_progress and p.chunked and not p.uploaded))
             self.button_continue.setEnabled(bool(p.paused))
             self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
             self.button_stop.setEnabled(bool(p.in_progress))
         else:
             self.button_valid.setEnabled(False)
             self.button_split.setEnabled(False)
+            self.button_upload.setEnabled(False)
             self.button_continue.setEnabled(False)
             self.button_pause.setEnabled(False)
             self.button_stop.setEnabled(False)
@@ -296,6 +300,17 @@ class MainWindow(QtGui.QMainWindow):
         project = self.getCurrentProject()
 
         process = processes.SplitToChunksProcess(project)
+        manager.addProcess(process)
+        QtCore.QTimer().singleShot(10, manager.runProcesses)
+
+        self.enableDisableButtons()
+
+    def onUploadClicked(self):
+        self.view.setFocus()
+
+        project = self.getCurrentProject()
+
+        process = processes.UploadProcess(project, post)
         manager.addProcess(process)
         QtCore.QTimer().singleShot(10, manager.runProcesses)
 

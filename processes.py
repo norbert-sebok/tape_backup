@@ -252,13 +252,13 @@ class SplitToChunksProcess(Process):
         self.project.save()
 
     def processChunk(self, chunk):
-        name = "{:09d}.json".format(self.chunk_count)
-        path = os.path.join(self.project.chunks_folder, name+'.zip')
+        name = "{:09d}.json.zip".format(self.chunk_count)
+        path = os.path.join(self.project.chunks_folder, name)
 
         data = self.convertedRows(chunk)
         json_str = json.dumps(data)
         with zipfile.ZipFile(path, mode='w') as z:
-            z.writestr(name, json_str)
+            z.writestr('chunk.csv', json_str)
 
         self.chunk_count += 1
 
@@ -294,6 +294,53 @@ def convertStamp(value):
 
 def convertText(value):
     return value
+
+
+# -----------------------------------------------------------------------------
+# UPLOAD PROCESS
+
+
+class UploadProcess(Process):
+
+    def __init__(self, project, post):
+        self.post = post
+
+        super(UploadProcess, self).__init__(project)
+
+    def runProcess(self):
+        self.count = 0
+        names = sorted(os.listdir(self.project.chunks_folder))
+
+        for name in names:
+            path = os.path.join(self.project.chunks_folder, name)
+            self.uploadPath(path)
+            self.calcStatus()
+            yield
+
+        self.calcStatus()
+        self.markAsFinished()
+
+        self.project.uploaded = True
+        self.project.status = "Uploaded"
+        self.project.save()
+
+    def uploadPath(self, path):
+        with zipfile.ZipFile(path, "r") as z:
+            data = z.read("chunk.csv")
+            rows = json.loads(data)
+
+        result, error = self.post("upload_rows", {
+            "login_token": models.getLoginToken(),
+            "project_token": self.project.project_token,
+            "rows": rows
+            })
+
+        self.count += len(rows)
+
+    def calcStatus(self):
+        self.project.status = "Uploading..."
+        self.project.records_uploaded = self.count
+        self.project.save()
 
 
 # -----------------------------------------------------------------------------
