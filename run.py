@@ -368,7 +368,7 @@ class TableModel(QtCore.QAbstractTableModel):
             col = index.column()
             title = self.header[col]
     
-            if title in ("Validated", "Invalid", "Chunked"):
+            if title in ("Validated", "Invalid", "Chunked", "Uploaded"):
                 return int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
             else:
                 return int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
