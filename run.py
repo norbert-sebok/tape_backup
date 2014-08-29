@@ -208,7 +208,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def selectById(self, id):
         count = self.getCountById(id)
-        if count:
+        if count is not None:
             index = self.model.createIndex(count, 0)
             self.view.setCurrentIndex(index)
 
