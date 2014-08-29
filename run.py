@@ -133,6 +133,7 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.buildWidgets()
+        models.project_listeners.append(self.updateRow)
 
     def closeEvent(self, event):
         if models.hasInProgress():
@@ -277,7 +278,7 @@ class MainWindow(QtGui.QMainWindow):
         if not error:
             models.setValidation(project, result["validation"])
 
-            process = processes.ValidationProcess(project, self.updateRow)
+            process = processes.ValidationProcess(project)
             manager.addProcess(process)
             QtCore.QTimer().singleShot(10, manager.runProcesses)
 
@@ -288,7 +289,7 @@ class MainWindow(QtGui.QMainWindow):
     def onSplitClicked(self):
         project = self.getCurrentProject()
 
-        process = processes.SplitToChunksProcess(project, self.updateRow)
+        process = processes.SplitToChunksProcess(project)
         manager.addProcess(process)
         QtCore.QTimer().singleShot(10, manager.runProcesses)
 

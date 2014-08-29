@@ -76,9 +76,8 @@ class ProcessManager(object):
 
 class Process(object):
 
-    def __init__(self, project, updateRow):
+    def __init__(self, project):
         self.project = project
-        self.updateRow = updateRow
 
         self.running = True
         self.paused = False
@@ -113,9 +112,7 @@ class Process(object):
         self.running = False
 
         self.project.in_progress = False
-        models.commit(self.project)
-
-        self.updateRow(self.project)
+        self.project.save()
 
 
 # -----------------------------------------------------------------------------
@@ -124,11 +121,11 @@ class Process(object):
 
 class ValidationProcess(Process):
 
-    def __init__(self, project, updateRow):
+    def __init__(self, project):
         self.validators = getValidators(project)
         self.errors = {count: 0 for count, _ in enumerate(self.validators)}
 
-        super(ValidationProcess, self).__init__(project, updateRow)
+        super(ValidationProcess, self).__init__(project)
 
     def runProcess(self):
         with open(self.project.path) as f:
@@ -150,8 +147,7 @@ class ValidationProcess(Process):
         if not invalid:
             self.project.validated = True
             self.project.status = "Ready for chunking"
-            models.commit(self.project)
-            self.updateRow(self.project)
+            self.project.save()
 
     def calcStatus(self, count):
         invalid = sum(self.errors.values())
@@ -160,9 +156,7 @@ class ValidationProcess(Process):
         self.project.status = "Validating..."
         self.project.records_validated = valid
         self.project.records_invalid = invalid
-        models.commit(self.project)
-
-        self.updateRow(self.project)
+        self.project.save()
 
 
 def getValidators(project):
@@ -209,10 +203,10 @@ class SplitToChunksProcess(Process):
 
     rows_per_chunk = 400
 
-    def __init__(self, project, updateRow):
+    def __init__(self, project):
         self.converters = getConverters(project)
 
-        super(SplitToChunksProcess, self).__init__(project, updateRow)
+        super(SplitToChunksProcess, self).__init__(project)
 
     def runProcess(self):
         self.chunk_count = 0
@@ -238,8 +232,7 @@ class SplitToChunksProcess(Process):
 
         self.project.chunked = True
         self.project.status = "Ready for uploading"
-        models.commit(self.project)
-        self.updateRow(self.project)
+        self.project.save()
 
     def processChunk(self, chunk):
         folder = os.path.join(config.CHUNK_FOLDER, str(self.project.id))
@@ -263,13 +256,9 @@ class SplitToChunksProcess(Process):
         return [func(value) for func, value in zip(self.converters, row)]
 
     def calcStatus(self):
-        rows = self.chunk_count * self.rows_per_chunk
-
         self.project.status = "Chunking..."
-        self.project.records_chunked = rows
-        models.commit(self.project)
-
-        self.updateRow(self.project)
+        self.project.records_chunked = self.chunk_count * self.rows_per_chunk
+        self.project.save()
 
 
 def getConverters(project):

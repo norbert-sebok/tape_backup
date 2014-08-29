@@ -49,6 +49,13 @@ class Project(Base):
     records_chunked = Column(Integer)
     records_uploaded = Column(Integer)
 
+    def save(self):
+        session.add(self)
+        session.commit()
+
+        for func in project_listeners:
+            func(self)
+
 
 # -----------------------------------------------------------------------------
 # FUNCTIONS - CONFIG
@@ -177,14 +184,10 @@ engine = create_engine('sqlite:///{}'.format(path))
 Base.metadata.create_all(engine)
 
 
-def commit(obj):
-    session.add(obj)
-    session.commit()
-
-
 # -----------------------------------------------------------------------------
-# SESSION
+# MAIN
 
 session = sessionmaker(bind=engine)()
+project_listeners = []
 
 clearBrokenProjectsOnAppStart()
