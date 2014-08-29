@@ -274,6 +274,9 @@ class SplitToChunksProcess(Process):
         self.chunk_count += 1
         self.row_count += len(data)
 
+        chunk = models.Chunk(project=self.project, path=path)
+        chunk.save()
+
     def convertedRows(self, rows):
         for row in rows:
             try:
