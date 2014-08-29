@@ -90,7 +90,7 @@ def addProject(name, form_name, type_name, path, project_token):
         type_name=type_name,
         path=path,
         project_token=project_token,
-        status="Waiting for validation"
+        status="Ready for validation"
         )
 
     session.add(project)

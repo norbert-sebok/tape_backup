@@ -149,7 +149,7 @@ class ValidationProcess(Process):
         invalid = sum(self.errors.values())
         if not invalid:
             self.project.validated = True
-            self.project.status = "Waiting for chunking"
+            self.project.status = "Ready for chunking"
             models.commit(self.project)
             self.updateRow(self.project)
 
@@ -233,12 +233,13 @@ class SplitToChunksProcess(Process):
             if chunk:
                 self.processChunk(chunk)
 
-        self.project.chunked = True
-        self.project.status = "Waiting for uploading"
-        models.commit(self.project)
-
         self.calcStatus()
         self.markAsFinished()
+
+        self.project.chunked = True
+        self.project.status = "Ready for uploading"
+        models.commit(self.project)
+        self.updateRow(self.project)
 
     def processChunk(self, chunk):
         folder = os.path.join(config.CHUNK_FOLDER, str(self.project.id))
