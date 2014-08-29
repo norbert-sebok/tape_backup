@@ -8,8 +8,5 @@ API_URL = "http://127.0.0.1:5000"
 # The path of the logo image
 LOGO_PATH = "images/logo.png"
 
-# The folder of the database file(s)
+# The folder of the database and temporary filess
 DB_FOLDER = "db"
-
-# The folder of the chunk files
-CHUNK_FOLDER = "chunk"

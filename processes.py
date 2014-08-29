@@ -133,12 +133,16 @@ class ValidationProcess(Process):
         self.validators = getValidators(self.project)
         errors = 0
 
+        self.project.delimiter = ','
+        self.project.save()
+
         with open(self.project.path) as f:
-            reader = csv.reader(f, delimiter=',', quotechar='"')
+            reader = csv.reader(f, delimiter=str(self.project.delimiter))
 
             for count, row in enumerate(reader):
                 if not validateRow(self.validators, row):
                     errors += 1
+                    self.saveToErrorsFile(row)
 
                 if (count + 1) % 1000 == 0:
                     self.calcStatus(count, errors)
@@ -158,6 +162,18 @@ class ValidationProcess(Process):
         self.project.records_validated = count + 1 - errors
         self.project.records_invalid = errors
         self.project.save()
+
+    def saveToErrorsFile(self, row):
+        folder = os.path.join(config.DB_FOLDER, str(self.project.id))
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        self.project.errors_file = os.path.join(folder, "validating_errors.csv")
+        self.project.save()
+
+        with open(self.project.errors_file, "a") as f:
+            line = self.project.delimiter.join(row)
+            f.write(line + '\n')
 
 
 def getValidators(project):
@@ -212,7 +228,7 @@ class SplitToChunksProcess(Process):
         self.createFolder()
 
     def createFolder(self):
-        folder = os.path.join(config.CHUNK_FOLDER, str(self.project.id))
+        folder = os.path.join(config.DB_FOLDER, str(self.project.id), 'chunks')
         if not os.path.exists(folder):
             os.makedirs(folder)
 
@@ -223,7 +239,7 @@ class SplitToChunksProcess(Process):
         self.chunk_count = 0
 
         with open(self.project.path) as f:
-            reader = csv.reader(f, delimiter=',', quotechar='"')
+            reader = csv.reader(f, delimiter=str(self.project.delimiter))
 
             chunk = []
             for row in reader:

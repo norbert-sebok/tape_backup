@@ -34,10 +34,14 @@ class Project(Base):
     name = Column(String)
     form_name = Column(String)
     type_name = Column(String)
-    path = Column(String)
     project_token = Column(String)
     validation = Column(String)
+
+    path = Column(String)
+    delimiter = Column(String)
+
     chunks_folder = Column(String)
+    errors_file = Column(String)
 
     status = Column(String)
     in_progress = Column(Boolean)
