@@ -129,41 +129,34 @@ class Process(object):
 
 class ValidationProcess(Process):
 
-    def __init__(self, project):
-        self.validators = getValidators(project)
-        self.errors = {count: 0 for count, _ in enumerate(self.validators)}
-
-        super(ValidationProcess, self).__init__(project)
-
     def runProcess(self):
+        self.validators = getValidators(self.project)
+        errors = 0
+
         with open(self.project.path) as f:
             reader = csv.reader(f, delimiter=',', quotechar='"')
 
             for count, row in enumerate(reader):
-                validateRow(self.validators, row, self.errors)
+                if not validateRow(self.validators, row):
+                    errors += 1
 
                 if (count + 1) % 1000 == 0:
-                    self.calcStatus(count)
+                    self.calcStatus(count, errors)
 
                 if count % 100 == 0:
                     yield
 
-        self.calcStatus(count)
+        self.calcStatus(count, errors)
         self.markAsFinished()
 
-        invalid = sum(self.errors.values())
-        if not invalid:
-            self.project.validated = True
-            self.project.status = "Ready for chunking"
-            self.project.save()
+        self.project.validated = True
+        self.project.status = "Ready for chunking"
+        self.project.save()
 
-    def calcStatus(self, count):
-        invalid = sum(self.errors.values())
-        valid = count + 1 - invalid
-
+    def calcStatus(self, count, errors):
         self.project.status = "Validating..."
-        self.project.records_validated = valid
-        self.project.records_invalid = invalid
+        self.project.records_validated = count + 1 - errors
+        self.project.records_invalid = errors
         self.project.save()
 
 
@@ -177,11 +170,12 @@ def getValidators(project):
     return [d[v] for v in project.validation.split(',')]
 
 
-def validateRow(validators, row, errors):
-    for count, (validator, value) in enumerate(zip(validators, row)):
+def validateRow(validators, row):
+    for validator, value in zip(validators, row):
         if not validator(value):
-            errors[count] += 1
+            return False
 
+    return True
 
 def validateNumber(value):
     try:
