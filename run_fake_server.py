@@ -102,6 +102,20 @@ def get_validations():
     return json.dumps(result)
 
 
+@app.route("/upload_rows", methods=['POST'])
+def upload_rows():
+    login_token = flask.request.json['login_token']
+    project_token = flask.request.json['project_token']
+    rows = flask.request.json['rows']
+
+    if isValidLoginToken(login_token):
+        result = {'uploaded': len(rows)}
+    else:
+        result = {'error': 'Invalid login token'}
+
+    return json.dumps(result)
+
+
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 
