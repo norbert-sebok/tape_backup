@@ -5,9 +5,9 @@
 import os
 
 # Related third party imports
-from sqlalchemy import create_engine, Boolean, Column, Integer, String
+from sqlalchemy import create_engine, Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import backref, relationship, sessionmaker
 
 # Local application/library specific imports
 import config
@@ -63,8 +63,25 @@ class Project(Base):
             func(self)
 
 
+class Chunk(Base):
+    __tablename__ = 'chunk'
+
+    id = Column(Integer, primary_key=True)
+
+    project_id = Column(Integer, ForeignKey('project.id'))
+    project = relationship("Project", backref=backref('chunks', order_by=id))
+
+    path = Column(String)
+    upload_id = Column(String)
+
+    def save(self):
+        session.add(self)
+        session.commit()
+
+
 # -----------------------------------------------------------------------------
 # FUNCTIONS - CONFIG
+
 
 def getLoginToken():
     config = session.query(Config).first()
