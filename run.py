@@ -253,7 +253,7 @@ class MainWindow(QtGui.QMainWindow):
             self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
             self.button_stop.setEnabled(bool(p.in_progress))
         else:
-            self.button_valid.setEnabled(True)
+            self.button_valid.setEnabled(False)
             self.button_split.setEnabled(False)
             self.button_continue.setEnabled(False)
             self.button_pause.setEnabled(False)
