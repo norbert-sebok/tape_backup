@@ -100,8 +100,7 @@ def addProject(name, form_name, type_name, path, project_token):
         status="Ready for validation"
         )
 
-    session.add(project)
-    session.commit()
+    project.save()
 
     return project.id
 
@@ -112,27 +111,23 @@ def getProjects():
 
 def setValidation(project, validation):
     project.validation = validation
-    session.add(project)
-    session.commit()
+    project.save()
 
 
 def setStatus(project, status):
     project.status = status
-    session.add(project)
-    session.commit()
+    project.save()
 
 
 def setInProgress(project, in_progress):
     project.in_progress = in_progress
-    session.add(project)
-    session.commit()
+    project.save()
 
 
 def setValidated(project):
     project.validated = True
     project.status = "Validated"
-    session.add(project)
-    session.commit()
+    project.save()
 
 
 def clearBrokenProjectsOnAppStart():
@@ -143,29 +138,24 @@ def clearBrokenProjectsOnAppStart():
         project.in_progress = False
         project.paused = False
         project.status = "Broken"
-        session.add(project)
-        session.commit()
+        project.save()
 
 
 def stopProject(project):
     project.in_progress = False
-    project.status = "Stopped"
-    session.add(project)
-    session.commit()
+    project.status += " stopped"
+    project.save()
 
 
 def pauseProject(project):
     project.paused = True
-    project.status = "Paused"
-    session.add(project)
-    session.commit()
+    project.status += " paused"
+    project.save()
 
 
 def continueProject(project):
     project.paused = False
-    project.status = "In progress"
-    session.add(project)
-    session.commit()
+    project.save()
 
 
 def hasInProgress():
