@@ -325,11 +325,9 @@ class UploadProcess(Process):
 
     def runProcess(self):
         self.count = 0
-        names = sorted(os.listdir(self.project.chunks_folder))
 
-        for name in names:
-            path = os.path.join(self.project.chunks_folder, name)
-            self.uploadPath(path)
+        for chunk in self.project.chunks:
+            self.uploadChunk(chunk)
             self.calcStatus()
             yield
 
@@ -340,8 +338,8 @@ class UploadProcess(Process):
         self.project.status = "Uploaded"
         self.project.save()
 
-    def uploadPath(self, path):
-        with zipfile.ZipFile(path, "r") as z:
+    def uploadChunk(self, chunk):
+        with zipfile.ZipFile(chunk.path, "r") as z:
             data = z.read("chunk.csv")
             rows = json.loads(data)
 
@@ -351,7 +349,10 @@ class UploadProcess(Process):
             "rows": rows
             })
 
-        self.count += len(rows)
+        if not error:
+            self.count += len(rows)
+            chunk.upload_id = result['upload_id']
+            chunk.save()
 
     def calcStatus(self):
         self.project.status = "Uploading..."
