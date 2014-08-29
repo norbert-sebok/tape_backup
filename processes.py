@@ -325,11 +325,30 @@ class UploadProcess(Process):
 
     def runProcess(self):
         self.count = 0
+        self.project.status = "Uploading..."
+        self.calcStatus()
 
         for chunk in self.project.chunks:
-            self.uploadChunk(chunk)
+            if not chunk.upload_id:
+                self.uploadChunk(chunk)
+                yield
+
+        count = 0
+        chunks = self.getChunksToReupload()
+        while chunks:
+            count += 1
+            self.project.status = "Checking uploads ({}. cycle)...".format(count)
             self.calcStatus()
-            yield
+
+            for chunk in chunks:
+                self.uploadChunk(chunk)
+                yield
+
+            if count > 4:
+                self.stopProcess()
+                return
+
+            chunks = self.getChunksToReupload()
 
         self.calcStatus()
         self.markAsFinished()
@@ -351,12 +370,24 @@ class UploadProcess(Process):
 
         if not error:
             self.count += len(rows)
+            chunk.uploaded = True
             chunk.upload_id = result['upload_id']
             chunk.save()
 
+        self.calcStatus()
+
+    def getChunksToReupload(self):
+        result, error = self.post("get_upload_ids", {
+            "login_token": models.getLoginToken(),
+            "project_token": self.project.project_token
+            })
+
+        if not error:
+           upload_ids = set(result["upload_ids"])
+           return [c for c in self.project.chunks if c.upload_id not in upload_ids]
+
     def calcStatus(self):
-        self.project.status = "Uploading..."
-        self.project.records_uploaded = self.count
+        self.project.records_uploaded = models.getUploadedCount(self.project)
         self.project.save()
 
 

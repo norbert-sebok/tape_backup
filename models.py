@@ -5,7 +5,8 @@
 import os
 
 # Related third party imports
-from sqlalchemy import create_engine, Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import create_engine, func
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship, sessionmaker
 
@@ -73,6 +74,8 @@ class Chunk(Base):
 
     path = Column(String)
     rows = Column(Integer)
+
+    uploaded = Column(Boolean)
     upload_id = Column(String)
 
     def save(self):
@@ -134,6 +137,16 @@ def clearBrokenProjectsOnAppStart():
 
 def hasInProgress():
     return bool(session.query(Project).filter(Project.in_progress==True).all())
+
+
+# -----------------------------------------------------------------------------
+# FUNCTIONS - CHUNKS
+
+
+def getUploadedCount(project):
+    query = session.query(func.sum(Chunk.rows))
+    query = query.filter(Chunk.project==project, Chunk.uploaded==True)
+    return query.scalar()
 
 
 # -----------------------------------------------------------------------------
