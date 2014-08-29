@@ -215,6 +215,15 @@ class SplitToChunksProcess(Process):
         self.converters = getConverters(project)
 
         super(SplitToChunksProcess, self).__init__(project)
+        self.createFolder()
+
+    def createFolder(self):
+        folder = os.path.join(config.CHUNK_FOLDER, str(self.project.id))
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        self.project.chunks_folder = folder
+        self.project.save()
 
     def runProcess(self):
         self.chunk_count = 0
@@ -243,12 +252,8 @@ class SplitToChunksProcess(Process):
         self.project.save()
 
     def processChunk(self, chunk):
-        folder = os.path.join(config.CHUNK_FOLDER, str(self.project.id))
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-
         name = "{:09d}.json".format(self.chunk_count)
-        path = os.path.join(folder, name+'.zip')
+        path = os.path.join(self.project.chunks_folder, name+'.zip')
 
         data = self.convertedRows(chunk)
         json_str = json.dumps(data)

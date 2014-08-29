@@ -37,6 +37,7 @@ class Project(Base):
     path = Column(String)
     project_token = Column(String)
     validation = Column(String)
+    chunks_folder = Column(String)
 
     status = Column(String)
     in_progress = Column(Boolean)
