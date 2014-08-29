@@ -143,14 +143,15 @@ class ValidationProcess(Process):
                 if count % 100 == 0:
                     yield
 
+        self.calcStatus(count)
+        self.markAsFinished()
+
         invalid = sum(self.errors.values())
         if not invalid:
             self.project.validated = True
             self.project.status = "Waiting for chunking"
             models.commit(self.project)
-
-        self.calcStatus(count)
-        self.markAsFinished()
+            self.updateRow(self.project)
 
     def calcStatus(self, count):
         invalid = sum(self.errors.values())
