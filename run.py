@@ -272,6 +272,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def onValidateClicked(self):
         project = self.getCurrentProject()
+        if not project:
+            return
+
         login_token = models.getLoginToken()
         result, error = post("get_validations", {"login_token": login_token, 'form_name': project.form_name})
 
