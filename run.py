@@ -51,13 +51,13 @@ class ConnectingWindow(QtGui.QMainWindow):
         self.setCentralWidget(central)
 
     def checkVersion(self):
-        result, _ = post("check_version", {"version": config.VERSION})
+        result, _ = post('check_version', {'version': config.VERSION})
 
-        if "new_version" in result:
+        if 'new_version' in result:
             title = "Your version of the application is outdated"
             text = "Please download the <a href='{}'>recent version {}</a>".format(
-                result["url"],
-                result["new_version"]
+                result['url'],
+                result['new_version']
                 )
             QtGui.QMessageBox.critical(None, title, text)
             self.close()
@@ -67,7 +67,7 @@ class ConnectingWindow(QtGui.QMainWindow):
     def checkToken(self):
         login_token = models.getLoginToken()
 
-        _, error = post("check_login_token", {"login_token": login_token})
+        _, error = post('check_login_token', {'login_token': login_token})
 
         if not error:
             main_window.show()
@@ -95,7 +95,7 @@ class LoginWindow(QtGui.QMainWindow):
         self.edit_pass = QtGui.QLineEdit()
         self.edit_pass.setEchoMode(QtGui.QLineEdit.Password)
 
-        button = createButton("&Log in", "gtk-dialog-authentication.png", self.logIn)
+        button = createButton("&Log in", 'gtk-dialog-authentication.png', self.logIn)
 
         grid = QtGui.QGridLayout()
         grid.addWidget(label_name, 0, 0)
@@ -111,7 +111,7 @@ class LoginWindow(QtGui.QMainWindow):
     def logIn(self):
         username = self.edit_name.text()
         password = self.edit_pass.text()
-        result, error = post("log_in", {"username": username, "password": password})
+        result, error = post('log_in', {'username': username, 'password': password})
 
         if error == "Invalid username or password":
             text = "Invalid username or password"
@@ -122,7 +122,7 @@ class LoginWindow(QtGui.QMainWindow):
             self.close()
 
         else:
-            models.setLoginToken(result["token"])
+            models.setLoginToken(result['token'])
             connecting_window.show()
             QtCore.QTimer().singleShot(500, connecting_window.checkToken)
             self.close()
@@ -187,7 +187,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.view.connect(
             self.view.selectionModel(),
-            QtCore.SIGNAL("currentChanged(const QModelIndex &, const QModelIndex &)"),
+            QtCore.SIGNAL('currentChanged(const QModelIndex &, const QModelIndex &)'),
             self.enableDisableButtons)
         self.enableDisableButtons()
 
@@ -225,13 +225,13 @@ class MainWindow(QtGui.QMainWindow):
             return project
 
     def createButtons(self):
-        self.button_add = createButton(u"&Add new file", "list-add.png", self.onNewFileClicked)
-        self.button_valid = createButton(u"&Validate", "gtk-apply.png", self.onValidateClicked)
-        self.button_split = createButton(u"Split &to chunks", "accessories.png", self.onSplitClicked)
-        self.button_upload = createButton(u"&Upload", "internet.png", self.onUploadClicked)
-        self.button_continue = createButton(u"&Continue", "media-start.png", self.onContinueClicked)
-        self.button_pause = createButton(u"&Pause", "media-pause.png", self.onPauseClicked)
-        self.button_stop = createButton(u"&Stop", "media-stop.png", self.onStopClicked)
+        self.button_add = createButton(u"&Add new file", 'list-add.png', self.onNewFileClicked)
+        self.button_valid = createButton(u"&Validate", 'gtk-apply.png', self.onValidateClicked)
+        self.button_split = createButton(u"Split &to chunks", 'accessories.png', self.onSplitClicked)
+        self.button_upload = createButton(u"&Upload", 'internet.png', self.onUploadClicked)
+        self.button_continue = createButton(u"&Continue", 'media-start.png', self.onContinueClicked)
+        self.button_pause = createButton(u"&Pause", 'media-pause.png', self.onPauseClicked)
+        self.button_stop = createButton(u"&Stop", 'media-stop.png', self.onStopClicked)
 
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.button_add)
@@ -267,10 +267,10 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setFocus()
 
         login_token = models.getLoginToken()
-        result, error = post("get_form_names", {"login_token": login_token})
+        result, error = post('get_form_names', {'login_token': login_token})
 
         if not error:
-            form_names = result["form_names"]
+            form_names = result['form_names']
             self.w = NewFileWindow(form_names)
             self.w.show()
 
@@ -282,10 +282,10 @@ class MainWindow(QtGui.QMainWindow):
             return
 
         login_token = models.getLoginToken()
-        result, error = post("get_validations", {"login_token": login_token, 'form_name': project.form_name})
+        result, error = post('get_validations', {'login_token': login_token, 'form_name': project.form_name})
 
         if not error:
-            project.validation = result["validation"]
+            project.validation = result['validation']
             project.save()
 
             process = processes.ValidationProcess(project)
@@ -429,7 +429,7 @@ class NewFileWindow(QtGui.QMainWindow):
         for name in self.form_names:
             self.drop_form.addItem(name)
 
-        button = createButton("&Create", "list-add.png", self.onCreate)
+        button = createButton("&Create", 'list-add.png', self.onCreate)
         self.button_file = createButton("...", None, self.selectFile)
         self.path = None
 
@@ -485,10 +485,10 @@ class NewFileWindow(QtGui.QMainWindow):
 
 def createButton(text, icon_name, func):
     button = QtGui.QPushButton(text)
-    button.connect(button, QtCore.SIGNAL("clicked()"), func)
+    button.connect(button, QtCore.SIGNAL('clicked()'), func)
 
     if icon_name:
-        icon = QtGui.QIcon(os.path.join("images", icon_name))
+        icon = QtGui.QIcon(os.path.join('images', icon_name))
         button.setIcon(icon)
 
     return button
@@ -500,17 +500,17 @@ def createButton(text, icon_name, func):
 
 def getProjectToken(name, form_name, type_name):
     login_token = models.getLoginToken()
-    data = {"login_token": login_token, "name": name, "form_name": form_name, "type_name": type_name}
+    data = {'login_token': login_token, 'name': name, 'form_name': form_name, 'type_name': type_name}
 
-    result, error = post("get_project_token", data)
+    result, error = post('get_project_token', data)
 
-    return (None if error else result["project_token"])
+    return (None if error else result['project_token'])
 
 
 def post(route, data):
     try:
         result = post_core(route, data)
-        error = result.get("error")
+        error = result.get('error')
 
         if error == "Invalid login token":
             login_window.show()
@@ -525,7 +525,7 @@ def post(route, data):
 def post_core(route, data):
     url = "{}/{}".format(config.API_URL, route)
     json_data = json.dumps(data)
-    headers = {"content-type": "application/json"}
+    headers = {'content-type': 'application/json'}
 
     r = requests.post(url, data=json_data, headers=headers)
 

@@ -168,10 +168,10 @@ class ValidationProcess(Process):
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        self.project.errors_file = os.path.join(folder, "validating_errors.csv")
+        self.project.errors_file = os.path.join(folder, 'validating_errors.csv')
         self.project.save()
 
-        with open(self.project.errors_file, "a") as f:
+        with open(self.project.errors_file, 'a') as f:
             line = self.project.delimiter.join(row)
             f.write(line + '\n')
 
@@ -263,7 +263,7 @@ class SplitToChunksProcess(Process):
         self.project.save()
 
     def processChunk(self, chunk):
-        name = "{:09d}.json.zip".format(self.chunk_count)
+        name = '{:09d}.json.zip'.format(self.chunk_count)
         path = os.path.join(self.project.chunks_folder, name)
 
         data = list(self.convertedRows(chunk))
@@ -358,14 +358,14 @@ class UploadProcess(Process):
         self.project.save()
 
     def uploadChunk(self, chunk):
-        with zipfile.ZipFile(chunk.path, "r") as z:
-            data = z.read("chunk.csv")
+        with zipfile.ZipFile(chunk.path, 'r') as z:
+            data = z.read('chunk.csv')
             rows = json.loads(data)
 
-        result, error = self.post("upload_rows", {
-            "login_token": models.getLoginToken(),
-            "project_token": self.project.project_token,
-            "rows": rows
+        result, error = self.post('upload_rows', {
+            'login_token': models.getLoginToken(),
+            'project_token': self.project.project_token,
+            'rows': rows
             })
 
         if not error:
@@ -377,13 +377,13 @@ class UploadProcess(Process):
         self.calcStatus()
 
     def getChunksToReupload(self):
-        result, error = self.post("get_upload_ids", {
-            "login_token": models.getLoginToken(),
-            "project_token": self.project.project_token
+        result, error = self.post('get_upload_ids', {
+            'login_token': models.getLoginToken(),
+            'project_token': self.project.project_token
             })
 
         if not error:
-           upload_ids = set(result["upload_ids"])
+           upload_ids = set(result['upload_ids'])
            return [c for c in self.project.chunks if c.upload_id not in upload_ids]
 
     def calcStatus(self):
