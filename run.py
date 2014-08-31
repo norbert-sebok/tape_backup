@@ -69,13 +69,14 @@ class ConnectingWindow(QtGui.QMainWindow):
 
         _, error = post('check_login_token', {'login_token': login_token})
 
-        if not error:
+        if error:
+            self.checkToken()
+        else:
             main_window.show()
+            self.close()
 
-        self.close()
 
-
-class LoginWindow(QtGui.QMainWindow):
+class LoginWindow(QtGui.QDialog):
 
     def __init__(self):
         super(LoginWindow, self).__init__()
@@ -96,6 +97,7 @@ class LoginWindow(QtGui.QMainWindow):
         self.edit_pass.setEchoMode(QtGui.QLineEdit.Password)
 
         button = createButton("&Log in", 'gtk-dialog-authentication.png', self.logIn)
+        button.setDefault(True)
 
         grid = QtGui.QGridLayout()
         grid.addWidget(label_name, 0, 0)
@@ -105,8 +107,7 @@ class LoginWindow(QtGui.QMainWindow):
         grid.addWidget(button, 2, 1)
 
         central = QtGui.QWidget()
-        central.setLayout(grid)
-        self.setCentralWidget(central)
+        self.setLayout(grid)
 
     def logIn(self):
         username = self.edit_name.text()
@@ -123,8 +124,6 @@ class LoginWindow(QtGui.QMainWindow):
 
         else:
             models.setLoginToken(result['token'])
-            connecting_window.show()
-            QtCore.QTimer().singleShot(500, connecting_window.checkToken)
             self.close()
 
 
@@ -525,7 +524,8 @@ def post(route, data):
         error = result.get('error')
 
         if error == "Invalid login token":
-            login_window.show()
+            login_window = LoginWindow()
+            login_window.exec_()
 
         return result, error
 
@@ -553,7 +553,6 @@ def post_core(route, data):
 app = QtGui.QApplication(sys.argv)
 
 main_window = MainWindow()
-login_window = LoginWindow()
 connecting_window = ConnectingWindow()
 
 manager = processes.ProcessManager(app.processEvents)
