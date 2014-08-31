@@ -28,7 +28,7 @@ class ConnectingWindow(QtGui.QMainWindow):
         QtCore.QTimer().singleShot(500, self.checkVersion)
 
     def buildWidgets(self):
-        self.setWindowTitle(u"Cool name for the app")
+        setTitleAndIcon(self, "Cool name for the app", 'python.png')
 
         pixmap = QtGui.QPixmap(config.LOGO_PATH)
         label = QtGui.QLabel()
@@ -82,7 +82,7 @@ class LoginWindow(QtGui.QMainWindow):
         self.buildWidgets()
 
     def buildWidgets(self):
-        self.setWindowTitle(u"Please log in")
+        setTitleAndIcon(self, "Please log in", 'gtk-dialog-authentication.png')
 
         label_name = QtGui.QLabel(u"Username:")
         label_name.setAlignment(QtCore.Qt.AlignRight)
@@ -153,7 +153,7 @@ class MainWindow(QtGui.QMainWindow):
             event.accept()
 
     def buildWidgets(self):
-        self.setWindowTitle(u"Cool name for the app")
+        setTitleAndIcon(self, "Cool name for the app", 'python.png')
         self.setSizeAndPosition(900, 600)
 
         self.createButtons()
@@ -412,7 +412,7 @@ class NewFileWindow(QtGui.QMainWindow):
         self.buildWidgets()
 
     def buildWidgets(self):
-        self.setWindowTitle(u"New file")
+        setTitleAndIcon(self, "New file", 'list-add.png')
 
         label_name = QtGui.QLabel(u"Project name:")
         label_name.setAlignment(QtCore.Qt.AlignRight)
@@ -483,15 +483,24 @@ class NewFileWindow(QtGui.QMainWindow):
 # -----------------------------------------------------------------------------
 # FUNCTIONS - GUI
 
+
 def createButton(text, icon_name, func):
     button = QtGui.QPushButton(text)
     button.connect(button, QtCore.SIGNAL('clicked()'), func)
 
     if icon_name:
-        icon = QtGui.QIcon(os.path.join('images', icon_name))
-        button.setIcon(icon)
+        button.setIcon(getIcon(icon_name))
 
     return button
+
+
+def getIcon(icon_name):
+    return QtGui.QIcon(os.path.join('images', icon_name))
+
+
+def setTitleAndIcon(window, title, icon_name):
+    window.setWindowTitle(title)
+    window.setWindowIcon(getIcon(icon_name))
 
 
 # -----------------------------------------------------------------------------
