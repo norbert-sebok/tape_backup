@@ -268,7 +268,7 @@ class SplitToChunksProcess(Process):
 
         data = list(self.convertedRows(chunk))
         json_str = json.dumps(data)
-        with zipfile.ZipFile(path, mode='w') as z:
+        with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
             z.writestr('chunk.csv', json_str)
 
         self.chunk_count += 1
