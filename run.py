@@ -185,6 +185,9 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
 
+        self.view.setSelectionBehavior(self.view.SelectRows)
+        self.view.selectRow(0)
+
         self.view.connect(
             self.view.selectionModel(),
             QtCore.SIGNAL('currentChanged(const QModelIndex &, const QModelIndex &)'),
