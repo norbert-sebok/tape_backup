@@ -7,12 +7,14 @@ import csv
 import datetime
 import json
 import os
+import sys
 import zipfile
 
 # Related third party imports
 
 # Local application/library specific imports
 import config
+import excepthook
 import models
 
 # -----------------------------------------------------------------------------
@@ -90,18 +92,27 @@ class Process(object):
     def runOneStep(self):
         try:
             self.generator.next()
+
         except StopIteration:
-            self.project.in_progress = False
-            self.project.save()
+            pass
+
+        except Exception, e:
+            self.stopProcess(str(e))
+            excepthook.excepthook(sys.exc_type, sys.exc_value, sys.exc_traceback)
 
     def runProcess(self):
         pass
 
-    def stopProcess(self):
+    def stopProcess(self, error=None):
         self.running = False
         self.project.in_progress = False
         self.project.paused = False
-        self.project.status += " stopped"
+
+        if error:
+            self.project.status = "stopped (error: {})".format(error)
+        else:
+            self.project.status += " stopped"
+
         self.project.save()
 
     def pauseProcess(self):
