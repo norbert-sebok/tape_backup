@@ -546,7 +546,7 @@ def getProjectToken(name, form_name, type_name):
     return (None if error else result['project_token'])
 
 
-def post(route, data):
+def post(route, data, count=0):
     try:
         result = post_core(route, data)
         error = result.get('error')
@@ -556,6 +556,13 @@ def post(route, data):
             login_window.exec_()
 
         return result, error
+
+    except requests.ConnectionError:
+        if count < 2:
+            time.sleep(1.0)
+            return post(route, data, count+1)
+        else:
+            return None, "The server is unreachable"
 
     except Exception, e:
         QtGui.QMessageBox.critical(None, "Error happened", str(e))
