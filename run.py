@@ -274,8 +274,7 @@ class MainWindow(QtGui.QMainWindow):
     def onNewFileClicked(self):
         self.view.setFocus()
 
-        login_token = models.getLoginToken()
-        result, error = post('get_form_names', {'login_token': login_token})
+        result, error = post('get_form_names')
 
         if not error:
             form_names = result['form_names']
@@ -289,8 +288,7 @@ class MainWindow(QtGui.QMainWindow):
         if not project:
             return
 
-        login_token = models.getLoginToken()
-        result, error = post('get_validations', {'login_token': login_token, 'form_name': project.form_name})
+        result, error = post('get_validations', {'form_name': project.form_name})
 
         if not error:
             project.validation = result['validation']
@@ -534,15 +532,15 @@ def setTitleAndIcon(window, title, icon_name):
 
 
 def getProjectToken(name, form_name, type_name):
-    login_token = models.getLoginToken()
-    data = {'login_token': login_token, 'name': name, 'form_name': form_name, 'type_name': type_name}
-
+    data = {'name': name, 'form_name': form_name, 'type_name': type_name}
     result, error = post('get_project_token', data)
 
     return (None if error else result['project_token'])
 
 
 def post(route, data, count=0):
+    data['login_token'] = models.getLoginToken()
+
     try:
         result = post_core(route, data)
         error = result.get('error')
