@@ -4,6 +4,7 @@
 # Standard library imports
 import json
 import os
+import time
 import sys
 
 # Related third party imports
@@ -51,9 +52,13 @@ class ConnectingWindow(QtGui.QMainWindow):
         self.setCentralWidget(central)
 
     def checkVersion(self):
-        result, _ = post('check_version', {'version': config.VERSION})
+        result, error = post('check_version', {'version': config.VERSION})
 
-        if 'new_version' in result:
+        if error:
+            QtGui.QMessageBox.critical(None, "Error happened", error)
+            self.close()
+
+        elif 'new_version' in result:
             title = "Your version of the application is outdated"
             text = "Please download the <a href='{}'>recent version {}</a>".format(
                 result['url'],
@@ -61,16 +66,7 @@ class ConnectingWindow(QtGui.QMainWindow):
                 )
             QtGui.QMessageBox.critical(None, title, text)
             self.close()
-        else:
-            self.checkToken()
 
-    def checkToken(self):
-        login_token = models.getLoginToken()
-
-        _, error = post('check_login_token', {'login_token': login_token})
-
-        if error:
-            self.checkToken()
         else:
             main_window.show()
             self.close()
