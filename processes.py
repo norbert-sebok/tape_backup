@@ -26,6 +26,7 @@ class ProcessManager(object):
     def __init__(self, processEvents):
         self.processEvents = processEvents
         self.processes = []
+        self.running = False
 
     def addProcess(self, process):
         self.processes.append(process)
