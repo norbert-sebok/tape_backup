@@ -46,6 +46,9 @@ class Project(Base):
 
     status = Column(String)
     in_progress = Column(Boolean)
+    stopped = Column(Boolean)
+    error = Column(String)
+
     validated = Column(Boolean)
     chunked = Column(Boolean)
     paused = Column(Boolean)
@@ -67,6 +70,8 @@ class Project(Base):
     def full_status(self):
         if self.paused:
             return self.status + " paused"
+        elif self.error:
+            return self.status + " failed with error: {}".format(self.error)
         else:
             return self.status
 
@@ -140,6 +145,7 @@ def clearBrokenProjectsOnAppStart():
         project.in_progress = False
         project.paused = False
         project.status = "Broken"
+        project.error = None
         project.save()
 
 

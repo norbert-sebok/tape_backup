@@ -103,12 +103,8 @@ class Process(object):
     def stopProcess(self, error=None):
         self.project.in_progress = False
         self.project.paused = False
-
-        if error:
-            self.project.status = "stopped (error: {})".format(error)
-        else:
-            self.project.status += " stopped"
-
+        self.project.stopped = True
+        self.project.error = error
         self.project.save()
 
     def pauseProcess(self):
@@ -162,6 +158,7 @@ class ValidationProcess(Process):
 
     def calcStatus(self, count, errors):
         self.project.status = "Validating..."
+        self.project.error = None
         self.project.records_validated = count + 1 - errors
         self.project.records_invalid = errors
         self.project.save()
@@ -289,6 +286,7 @@ class SplitToChunksProcess(Process):
 
     def calcStatus(self):
         self.project.status = "Chunking..."
+        self.project.error = None
         self.project.records_chunked = self.row_count
         self.project.save()
 
@@ -382,8 +380,7 @@ class UploadProcess(Process):
             chunk.uploaded = True
             chunk.upload_id = result['upload_id']
             chunk.save()
-
-        self.calcStatus()
+            self.calcStatus()
 
     def getChunksToReupload(self):
         result, error = self.post('get_upload_ids', {
@@ -399,6 +396,7 @@ class UploadProcess(Process):
            return [c for c in self.project.chunks if c.upload_id not in upload_ids]
 
     def calcStatus(self):
+        self.project.error = None
         self.project.records_uploaded = models.getUploadedCount(self.project)
         self.project.save()
 
