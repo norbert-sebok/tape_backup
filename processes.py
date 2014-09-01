@@ -59,7 +59,7 @@ class ProcessManager(object):
     def runProcessesCore(self):
         while True:
             for p in self.processes:
-                if not p.paused:
+                if not p.project.paused:
                     p.runOneStep()
 
             self.processEvents()
@@ -68,7 +68,7 @@ class ProcessManager(object):
             if not self.processes:
                 break
 
-            live_processes = [p for p in self.processes if not p.paused]
+            live_processes = [p for p in self.processes if not p.project.paused]
             if not live_processes:
                 break
 
@@ -84,7 +84,6 @@ class Process(object):
         self.project.save()
 
         self.running = True
-        self.paused = False
         self.finished = False
 
         self.generator = self.runProcess()
@@ -116,12 +115,10 @@ class Process(object):
         self.project.save()
 
     def pauseProcess(self):
-        self.paused = True
         self.project.paused = True
         self.project.save()
 
     def continueProcess(self):
-        self.paused = False
         self.project.paused = False
         self.project.save()
 
