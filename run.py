@@ -57,7 +57,6 @@ class ConnectingWindow(QtGui.QMainWindow):
         result, error = post('check_version', {'version': config.VERSION})
 
         if error:
-            QtGui.QMessageBox.critical(None, "Error happened", error)
             self.close()
 
         elif 'new_version' in result:
@@ -123,11 +122,9 @@ class LoginWindow(QtGui.QDialog):
         result, error = post('log_in', {'username': username, 'password': password})
 
         if error == "Invalid username or password":
-            text = "Invalid username or password"
-            QtGui.QMessageBox.critical(None, text, text)
+            pass
 
         elif error:
-            QtGui.QMessageBox.critical(None, "Error message from the server", error)
             self.close()
 
         else:
@@ -491,9 +488,11 @@ class NewFileWindow(QtGui.QDialog):
                 widget.setFocus()
                 return
 
-        project_token = getProjectToken(name, form_name, type_name)
+        data = {'name': name, 'form_name': form_name, 'type_name': type_name}
+        result, error = post('get_project_token', data)
 
-        if project_token:
+        if not error:
+            project_token = result['project_token']
             project_id = models.addProject(name, form_name, type_name, self.path, project_token)
             main_window.reloadTable(project_id)
             self.close()
@@ -552,13 +551,6 @@ def setTitleAndIcon(window, title, icon_name):
 # FUNCTIONS - API
 
 
-def getProjectToken(name, form_name, type_name):
-    data = {'name': name, 'form_name': form_name, 'type_name': type_name}
-    result, error = post('get_project_token', data)
-
-    return (None if error else result['project_token'])
-
-
 def post(route, data, count=0):
     data['login_token'] = models.getLoginToken()
 
@@ -569,15 +561,19 @@ def post(route, data, count=0):
         if error == "Invalid login token":
             login_window = LoginWindow()
             login_window.exec_()
+        elif error:
+            QtGui.QMessageBox.critical(None, "Error happened", error)
 
         return result, error
 
     except requests.ConnectionError:
         if count < 2:
-            time.sleep(1.0)
+            time.sleep(0.1)
             return post(route, data, count+1)
         else:
-            return None, "The server is unreachable"
+            error = "The server is unreachable"
+            QtGui.QMessageBox.critical(None, "Error happened", error)
+            return None, error
 
     except Exception, e:
         QtGui.QMessageBox.critical(None, "Error happened", str(e))
