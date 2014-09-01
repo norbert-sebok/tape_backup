@@ -26,7 +26,6 @@ class ProcessManager(object):
     def __init__(self, processEvents):
         self.processEvents = processEvents
         self.processes = []
-        self.running = False
 
     def addProcess(self, process):
         self.processes.append(process)
@@ -64,7 +63,7 @@ class ProcessManager(object):
 
             self.processEvents()
 
-            self.processes = [p for p in self.processes if p.running]
+            self.processes = [p for p in self.processes if p.project.in_progress]
             if not self.processes:
                 break
 
@@ -83,9 +82,7 @@ class Process(object):
         self.project.in_progress = True
         self.project.save()
 
-        self.running = True
         self.finished = False
-
         self.generator = self.runProcess()
 
     def runOneStep(self):
@@ -103,7 +100,6 @@ class Process(object):
         pass
 
     def stopProcess(self, error=None):
-        self.running = False
         self.project.in_progress = False
         self.project.paused = False
 
@@ -124,7 +120,6 @@ class Process(object):
 
     def markAsFinished(self):
         self.finished = True
-        self.running = False
 
         self.project.in_progress = False
         self.project.save()
