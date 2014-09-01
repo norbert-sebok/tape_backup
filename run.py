@@ -580,12 +580,10 @@ def post_core(route, data):
 # MAIN
 
 app = QtGui.QApplication(sys.argv)
+manager = processes.ProcessManager(app.processEvents)
 
 main_window = MainWindow()
 connecting_window = ConnectingWindow()
-
-manager = processes.ProcessManager(app.processEvents)
-
 connecting_window.show()
 
 sys.exit(app.exec_())
