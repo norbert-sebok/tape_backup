@@ -186,7 +186,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.view = QtGui.QTableView()
         self.view.setModel(self.model)
-        self.view.resizeColumnsToContents()
+        self.setColumnWidths()
 
         self.view.setSelectionBehavior(self.view.SelectRows)
         self.view.selectRow(0)
@@ -197,6 +197,10 @@ class MainWindow(QtGui.QMainWindow):
             self.enableDisableButtons)
         self.enableDisableButtons()
 
+    def setColumnWidths(self):
+        self.view.resizeColumnsToContents()
+        self.view.setColumnWidth(4, 300)
+
     def reloadTable(self, project_id=None):
         if not project_id:
             project = self.getCurrentProject()
@@ -205,7 +209,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.model.loadRows()
         self.model.reset()
-        self.view.resizeColumnsToContents()
+        self.setColumnWidths()
 
         if project_id:
             self.selectById(project_id)
@@ -353,7 +357,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.model.dataChanged.emit(count, index)
 
         self.enableDisableButtons()
-        self.view.resizeColumnsToContents()
+        self.setColumnWidths()
 
 
 class TableModel(QtCore.QAbstractTableModel):
