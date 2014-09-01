@@ -332,8 +332,11 @@ class UploadProcess(Process):
                 self.uploadChunk(chunk)
                 yield
 
-        count = 0
         chunks = self.getChunksToReupload()
+        if not chunks:
+            return
+
+        count = 0
         while chunks:
             count += 1
             self.project.status = "Checking uploads ({}. cycle)...".format(count)
@@ -367,7 +370,10 @@ class UploadProcess(Process):
             'rows': rows
             })
 
-        if not error:
+        if error:
+            self.stopProcess()
+
+        else:
             self.count += len(rows)
             chunk.uploaded = True
             chunk.upload_id = result['upload_id']
@@ -381,7 +387,10 @@ class UploadProcess(Process):
             'project_token': self.project.project_token
             })
 
-        if not error:
+        if error:
+            self.stopProcess()
+
+        else:
            upload_ids = set(result['upload_ids'])
            return [c for c in self.project.chunks if c.upload_id not in upload_ids]
 
