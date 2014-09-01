@@ -10,3 +10,6 @@ LOGO_PATH = 'images/logo.png'
 
 # The folder of the database and temporary filess
 DB_FOLDER = 'db'
+
+# Debug mode prints exceptions
+DEBUG = True

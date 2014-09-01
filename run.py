@@ -2,9 +2,11 @@
 # IMPORTS
 
 # Standard library imports
+import datetime
 import json
 import os
 import time
+import traceback
 import sys
 
 # Related third party imports
@@ -350,7 +352,7 @@ class MainWindow(QtGui.QMainWindow):
         if count is not None:
             row = self.model.loadRow(project)
             self.model.rows[count] = row
-    
+
             for index, _ in enumerate(row):
                 self.model.dataChanged.emit(count, index)
 
@@ -396,7 +398,7 @@ class TableModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.TextAlignmentRole:
             col = index.column()
             title = self.header[col]
-    
+
             if title in ("Validated", "Invalid", "Chunked", "Uploaded"):
                 return int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
             else:
@@ -498,6 +500,25 @@ class NewFileWindow(QtGui.QDialog):
 
 
 # -----------------------------------------------------------------------------
+# FUNCTIONS - LOG
+
+
+def excepthook(exc_type, exc_value, exc_traceback):
+    now = '{:%y-%m-%d - %H:%M:%S}'.format(datetime.datetime.now())
+    lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+
+    with open('log.log', 'a') as f:
+        f.write('{} - Exception:'.format(now))
+        for line in lines:
+            f.write('{} -  {}'.format(now, line))
+
+    if config.DEBUG:
+        traceback.print_exception(exc_type, exc_value, exc_traceback)
+
+    QtGui.QMessageBox.critical(None, "Error happened", str(exc_value))
+
+
+# -----------------------------------------------------------------------------
 # FUNCTIONS - GUI
 
 
@@ -578,6 +599,8 @@ def post_core(route, data):
 
 # -----------------------------------------------------------------------------
 # MAIN
+
+sys.excepthook = excepthook
 
 app = QtGui.QApplication(sys.argv)
 manager = processes.ProcessManager(app.processEvents)
