@@ -276,7 +276,7 @@ class MainWindow(QtGui.QMainWindow):
     def onNewFileClicked(self):
         self.view.setFocus()
 
-        result, error = post('get_form_names')
+        result, error = post('get_form_names', {})
 
         if not error:
             form_names = result['form_names']
