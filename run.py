@@ -379,7 +379,7 @@ class TableModel(QtCore.QAbstractTableModel):
         uploaded = "{:,}".format(p.records_uploaded or 0)
 
         return [
-            p.id, p.name, p.form_name, p.type_name, p.status,
+            p.id, p.name, p.form_name, p.type_name, p.full_status,
             validated, invalid, chunked, uploaded, p.path, p
             ]
 

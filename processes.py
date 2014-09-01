@@ -107,7 +107,6 @@ class Process(object):
     def pauseProcess(self):
         self.paused = True
         self.project.paused = True
-        self.project.status += " paused"
         self.project.save()
 
     def continueProcess(self):

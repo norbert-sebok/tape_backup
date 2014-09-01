@@ -63,6 +63,14 @@ class Project(Base):
         for func in project_listeners:
             func(self)
 
+    @property
+    def full_status(self):
+        if self.paused:
+            return self.status + " paused"
+        else:
+            return self.status
+
+
 
 class Chunk(Base):
     __tablename__ = 'chunk'
