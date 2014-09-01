@@ -360,7 +360,7 @@ class UploadProcess(Process):
         self.markAsFinished()
 
         self.project.uploaded = True
-        self.project.status = "Uploaded"
+        self.project.status = "Done"
         self.project.save()
 
     def uploadChunk(self, chunk):
