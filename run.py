@@ -84,30 +84,40 @@ class LoginWindow(QtGui.QDialog):
 
     def buildWidgets(self):
         setTitleAndIcon(self, "Please log in", 'gtk-dialog-authentication.png')
+        self.setMinimumWidth(200)
 
         label_name = QtGui.QLabel(u"Username:")
-        label_name.setAlignment(QtCore.Qt.AlignRight)
+        label_name.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
 
         label_pass = QtGui.QLabel(u"Password:")
-        label_pass.setAlignment(QtCore.Qt.AlignRight)
+        label_pass.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
 
         self.edit_name = QtGui.QLineEdit()
 
         self.edit_pass = QtGui.QLineEdit()
         self.edit_pass.setEchoMode(QtGui.QLineEdit.Password)
 
-        button = createButton("&Log in", 'gtk-dialog-authentication.png', self.logIn)
-        button.setDefault(True)
+        cancel_button = createButton("Cancel", 'gtk-cancel.png', self.close)
+        login_button = createButton("&Log in", 'gtk-dialog-authentication.png', self.logIn)
+        login_button.setDefault(True)
 
         grid = QtGui.QGridLayout()
         grid.addWidget(label_name, 0, 0)
         grid.addWidget(label_pass, 1, 0)
         grid.addWidget(self.edit_name, 0, 1)
         grid.addWidget(self.edit_pass, 1, 1)
-        grid.addWidget(button, 2, 1)
 
-        central = QtGui.QWidget()
-        self.setLayout(grid)
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(cancel_button)
+        hbox.addStretch()
+        hbox.addWidget(login_button)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(grid)
+        vbox.addWidget(getHorizontalLine())
+        vbox.addLayout(hbox)
+
+        self.setLayout(vbox)
 
     def logIn(self):
         username = self.edit_name.text()
@@ -273,8 +283,8 @@ class MainWindow(QtGui.QMainWindow):
 
         if not error:
             form_names = result['form_names']
-            self.w = NewFileWindow(form_names)
-            self.w.show()
+            window = NewFileWindow(form_names)
+            window.exec_()
 
     def onValidateClicked(self):
         self.view.setFocus()
@@ -406,7 +416,7 @@ class TableModel(QtCore.QAbstractTableModel):
             return self.header[col]
 
 
-class NewFileWindow(QtGui.QMainWindow):
+class NewFileWindow(QtGui.QDialog):
 
     def __init__(self, form_names):
         super(NewFileWindow, self).__init__()
@@ -414,16 +424,17 @@ class NewFileWindow(QtGui.QMainWindow):
         self.buildWidgets()
 
     def buildWidgets(self):
-        setTitleAndIcon(self, "New file", 'list-add.png')
+        setTitleAndIcon(self, "Add new file", 'list-add.png')
+        self.setMinimumWidth(300)
 
         label_name = QtGui.QLabel(u"Project name:")
-        label_name.setAlignment(QtCore.Qt.AlignRight)
+        label_name.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
 
         label_form = QtGui.QLabel(u"Form name:")
-        label_form.setAlignment(QtCore.Qt.AlignRight)
+        label_form.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
 
         label_file = QtGui.QLabel(u"File:")
-        label_file.setAlignment(QtCore.Qt.AlignRight)
+        label_file.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
 
         self.edit_name = QtGui.QLineEdit()
 
@@ -431,7 +442,10 @@ class NewFileWindow(QtGui.QMainWindow):
         for name in self.form_names:
             self.drop_form.addItem(name)
 
-        button = createButton("&Create", 'list-add.png', self.onCreate)
+        cancel_button = createButton("Cancel", 'gtk-cancel.png', self.close)
+        create_button = createButton("&Add new file", 'list-add.png', self.onCreate)
+        create_button.setDefault(True)
+
         self.button_file = createButton("...", None, self.selectFile)
         self.path = None
 
@@ -442,11 +456,18 @@ class NewFileWindow(QtGui.QMainWindow):
         grid.addWidget(self.edit_name, 0, 1)
         grid.addWidget(self.drop_form, 1, 1)
         grid.addWidget(self.button_file, 2, 1)
-        grid.addWidget(button, 3, 1)
 
-        central = QtGui.QWidget()
-        central.setLayout(grid)
-        self.setCentralWidget(central)
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(cancel_button)
+        hbox.addStretch()
+        hbox.addWidget(create_button)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(grid)
+        vbox.addWidget(getHorizontalLine())
+        vbox.addLayout(hbox)
+
+        self.setLayout(vbox)
 
     def selectFile(self):
         title = u"Which file would you like to upload?"
@@ -494,6 +515,13 @@ def createButton(text, icon_name, func):
         button.setIcon(getIcon(icon_name))
 
     return button
+
+
+def getHorizontalLine():
+    line = QtGui.QFrame()
+    line.setFrameShape(QtGui.QFrame.HLine)
+    line.setFrameShadow(QtGui.QFrame.Sunken)
+    return line
 
 
 def getIcon(icon_name):
