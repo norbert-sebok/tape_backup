@@ -351,7 +351,7 @@ class UploadProcess(Process):
                 yield
 
             if count > 4:
-                self.stopProcess()
+                self.stopProcess("Too many upload checking cycle")
                 return
 
             chunks = self.getChunksToReupload()
@@ -375,7 +375,7 @@ class UploadProcess(Process):
             })
 
         if error:
-            self.stopProcess()
+            self.stopProcess(error)
 
         else:
             self.count += len(rows)
@@ -392,7 +392,7 @@ class UploadProcess(Process):
             })
 
         if error:
-            self.stopProcess()
+            self.stopProcess(error)
 
         else:
            upload_ids = set(result['upload_ids'])
