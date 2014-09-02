@@ -143,11 +143,8 @@ class MainWindow(QtGui.QMainWindow):
         if models.hasInProgress():
             title = "There are running processes"
             text = "Would you like to stop all running processes?"
-            yes = QtGui.QMessageBox.Yes
-            no = QtGui.QMessageBox.No
-            answer = QtGui.QMessageBox.question(self, title, text, yes, no)
 
-            if answer == yes:
+            if choosedYes(self, title, text):
                 manager.stopAllProcesses()
                 event.accept()
             else:
@@ -516,6 +513,13 @@ class NewFileWindow(QtGui.QDialog):
 # -----------------------------------------------------------------------------
 # FUNCTIONS - GUI
 
+
+def choosedYes(window, title, text):
+    yes = QtGui.QMessageBox.Yes
+    no = QtGui.QMessageBox.No
+
+    answer = QtGui.QMessageBox.question(window, title, text, yes, no)
+    return answer == yes
 
 def createButton(text, icon_name, func):
     button = QtGui.QPushButton(text)
