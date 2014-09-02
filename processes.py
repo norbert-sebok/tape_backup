@@ -174,8 +174,7 @@ class ValidationAndSplitProcess(Process):
         self.chunk_count += 1
         self.records_validated += len(data)
 
-        chunk = models.Chunk(project=self.project, path=path, rows=len(data))
-        chunk.save()
+        models.addOrUpdateChunk(self.project, path, len(data))
 
     def convertedRows(self, rows):
         for row in rows:

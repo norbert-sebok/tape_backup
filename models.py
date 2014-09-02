@@ -158,6 +158,16 @@ def hasInProgress():
 # FUNCTIONS - CHUNKS
 
 
+def addOrUpdateChunk(project, path, rows):
+    chunk = session.query(Chunk).filter(Chunk.project==project, Chunk.path==path).first()
+
+    if not chunk:
+        chunk = Chunk(project=project, path=path)
+
+    chunk.rows = rows
+    chunk.save()
+
+
 def getUploadedCount(project):
     query = session.query(func.sum(Chunk.rows))
     query = query.filter(Chunk.project==project, Chunk.uploaded==True)
