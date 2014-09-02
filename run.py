@@ -251,8 +251,7 @@ class MainWindow(QtGui.QMainWindow):
         self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
         self.button_show.setCheckable(True)
 
-        self.button_valid = createButton(u"&Validate", 'gtk-apply.png', self.onValidateClicked)
-        self.button_split = createButton(u"Split &to chunks", 'accessories.png', self.onSplitClicked)
+        self.button_valid = createButton(u"&Validate and split", 'accessories.png', self.onValidateClicked)
         self.button_upload = createButton(u"&Upload", 'internet.png', self.onUploadClicked)
         self.button_open = createButton(u"&Open invalid rows", 'table.png', self.onOpenClicked)
         self.button_continue = createButton(u"&Continue", 'media-start.png', self.onContinueClicked)
@@ -268,7 +267,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.buttons_bottom = QtGui.QHBoxLayout()
         self.buttons_bottom.addWidget(self.button_valid)
-        self.buttons_bottom.addWidget(self.button_split)
         self.buttons_bottom.addWidget(self.button_upload)
         self.buttons_bottom.addSpacing(12)
         self.buttons_bottom.addWidget(self.button_open)
@@ -284,8 +282,7 @@ class MainWindow(QtGui.QMainWindow):
         if p:
             self.button_hide.setEnabled(bool(p))
             self.button_valid.setEnabled(bool(not p.in_progress and not p.validated))
-            self.button_split.setEnabled(bool(not p.in_progress and p.validated and not p.chunked))
-            self.button_upload.setEnabled(bool(not p.in_progress and p.chunked and not p.uploaded))
+            self.button_upload.setEnabled(bool(not p.in_progress and p.validated and not p.uploaded))
             self.button_open.setEnabled(bool(p.errors_file))
             self.button_continue.setEnabled(bool(p.paused))
             self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
@@ -293,7 +290,6 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.button_hide.setEnabled(False)
             self.button_valid.setEnabled(False)
-            self.button_split.setEnabled(False)
             self.button_upload.setEnabled(False)
             self.button_open.setEnabled(False)
             self.button_continue.setEnabled(False)
@@ -354,22 +350,11 @@ class MainWindow(QtGui.QMainWindow):
             project.validation = result['validation']
             project.save()
 
-            process = processes.ValidationProcess(project)
+            process = processes.ValidationAndSplitProcess(project)
             manager.addProcess(process)
             QtCore.QTimer().singleShot(10, manager.runProcesses)
 
             self.enableDisableButtons()
-
-    def onSplitClicked(self):
-        self.view.setFocus()
-
-        project = self.getCurrentProject()
-
-        process = processes.SplitToChunksProcess(project)
-        manager.addProcess(process)
-        QtCore.QTimer().singleShot(10, manager.runProcesses)
-
-        self.enableDisableButtons()
 
     def onUploadClicked(self):
         self.view.setFocus()
@@ -428,7 +413,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     header = [
         "ID", "Project Name", "Form name", "Type", "Status",
-        "Validated", "Invalid", "Chunked", "Uploaded", "Path"
+        "Invalid", "Validated", "Chunked", "Uploaded", "Path"
         ]
 
     def __init__(self):
@@ -440,14 +425,14 @@ class TableModel(QtCore.QAbstractTableModel):
         self.rows = [self.loadRow(p) for p in models.getProjects(self.visible)]
 
     def loadRow(self, p):
-        validated = "{:,}".format(p.records_validated or 0)
         invalid = "{:,}".format(p.records_invalid or 0)
+        validated = "{:,}".format(p.records_validated or 0)
         chunked = "{:,}".format(p.records_chunked or 0)
         uploaded = "{:,}".format(p.records_uploaded or 0)
 
         return [
             p.id, p.name, p.form_name, p.type_name, p.full_status,
-            validated, invalid, chunked, uploaded, p.path, p
+            invalid, validated, chunked, uploaded, p.path, p
             ]
 
     def rowCount(self, parent):

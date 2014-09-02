@@ -126,118 +126,20 @@ class Process(object):
 # VALIDATION PROCESS
 
 
-class ValidationProcess(Process):
+class ValidationAndSplitProcess(Process):
+
+    rows_per_chunk = 400
 
     def runProcess(self):
-        self.validators = getValidators(self.project)
-        errors = 0
+        self.createFolder()
+        self.converters = getConverters(self.project)
 
         self.project.delimiter = ','
         self.project.save()
 
-        with open(self.project.path) as f:
-            reader = csv.reader(f, delimiter=str(self.project.delimiter))
-
-            for count, row in enumerate(reader):
-                if not validateRow(self.validators, row):
-                    errors += 1
-                    self.saveToErrorsFile(row)
-
-                if (count + 1) % 1000 == 0:
-                    self.calcStatus(count, errors)
-
-                if count % 100 == 0:
-                    yield
-
-        self.calcStatus(count, errors)
-        self.markAsFinished()
-
-        self.project.validated = True
-        self.project.status = "Ready for chunking"
-        self.project.save()
-
-    def calcStatus(self, count, errors):
-        self.project.status = "Validating..."
-        self.project.error = None
-        self.project.records_validated = count + 1 - errors
-        self.project.records_invalid = errors
-        self.project.save()
-
-    def saveToErrorsFile(self, row):
-        folder = os.path.join(config.DB_FOLDER, str(self.project.id))
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-
-        self.project.errors_file = os.path.join(folder, 'validating_errors.csv')
-        self.project.save()
-
-        with open(self.project.errors_file, 'a') as f:
-            line = self.project.delimiter.join(row)
-            f.write(line + '\n')
-
-
-def getValidators(project):
-    d = {
-        'number': validateNumber,
-        'text': validateText,
-        'datetimestamp': validateStamp
-        }
-
-    return [d[v] for v in project.validation.split(',')]
-
-
-def validateRow(validators, row):
-    for validator, value in zip(validators, row):
-        if not validator(value):
-            return False
-
-    return True
-
-def validateNumber(value):
-    try:
-        float(value)
-        return True
-    except:
-        return False
-
-
-def validateStamp(value):
-    try:
-        datetime.datetime.strptime(value, '%Y-%m-%d')
-        return True
-    except:
-        return False
-
-
-def validateText(value):
-    return True
-
-
-# -----------------------------------------------------------------------------
-# SPLIT TO CHUNKS PROCESS
-
-
-class SplitToChunksProcess(Process):
-
-    rows_per_chunk = 400
-
-    def __init__(self, project):
-        self.converters = getConverters(project)
-
-        super(SplitToChunksProcess, self).__init__(project)
-        self.createFolder()
-
-    def createFolder(self):
-        folder = os.path.join(config.DB_FOLDER, str(self.project.id), 'chunks')
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-
-        self.project.chunks_folder = folder
-        self.project.save()
-
-    def runProcess(self):
         self.chunk_count = 0
-        self.row_count = 0
+        self.records_validated = 0
+        self.records_invalid = 0
 
         with open(self.project.path) as f:
             reader = csv.reader(f, delimiter=str(self.project.delimiter))
@@ -258,7 +160,7 @@ class SplitToChunksProcess(Process):
         self.calcStatus()
         self.markAsFinished()
 
-        self.project.chunked = True
+        self.project.validated = True
         self.project.status = "Ready for uploading"
         self.project.save()
 
@@ -267,12 +169,13 @@ class SplitToChunksProcess(Process):
         path = os.path.join(self.project.chunks_folder, name)
 
         data = list(self.convertedRows(chunk))
+
         json_str = json.dumps(data)
         with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
             z.writestr('chunk.csv', json_str)
 
         self.chunk_count += 1
-        self.row_count += len(data)
+        self.records_validated += len(data)
 
         chunk = models.Chunk(project=self.project, path=path, rows=len(data))
         chunk.save()
@@ -282,13 +185,36 @@ class SplitToChunksProcess(Process):
             try:
                 yield [func(value) for func, value in zip(self.converters, row)]
             except:
-                pass
+                self.records_invalid += 1
+                self.saveToErrorsFile(row)
+
+    def createFolder(self):
+        folder = os.path.join(config.DB_FOLDER, str(self.project.id), 'chunks')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        self.project.chunks_folder = folder
+        self.project.save()
 
     def calcStatus(self):
-        self.project.status = "Chunking..."
+        self.project.status = "Validating and splitting..."
         self.project.error = None
-        self.project.records_chunked = self.row_count
+        self.project.records_chunked = self.records_validated
+        self.project.records_validated = self.records_validated
+        self.project.records_invalid = self.records_invalid
         self.project.save()
+
+    def saveToErrorsFile(self, row):
+        folder = os.path.join(config.DB_FOLDER, str(self.project.id))
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        self.project.errors_file = os.path.join(folder, 'validating_errors.csv')
+        self.project.save()
+
+        with open(self.project.errors_file, 'a') as f:
+            line = self.project.delimiter.join(row)
+            f.write(line + '\n')
 
 
 def getConverters(project):

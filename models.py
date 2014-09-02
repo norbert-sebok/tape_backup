@@ -51,7 +51,6 @@ class Project(Base):
     error = Column(String)
 
     validated = Column(Boolean)
-    chunked = Column(Boolean)
     paused = Column(Boolean)
     uploaded = Column(Boolean)
 
