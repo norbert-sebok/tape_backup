@@ -750,7 +750,7 @@ def post_core(route, data):
 app = QtGui.QApplication(sys.argv)
 
 # Has to import after QApplication is created
-import live_server
+import real_time_server
 
 manager = processes.ProcessManager(app.processEvents)
 
