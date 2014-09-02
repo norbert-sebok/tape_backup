@@ -491,8 +491,8 @@ class NewFileWindow(QtGui.QDialog):
             self.drop_form.addItem(name)
 
         cancel_button = createButton("Cancel", 'gtk-cancel.png', self.close)
-        create_button = createButton("&Add new file", 'list-add.png', self.onCreate)
-        create_button.setDefault(True)
+        self.create_button = createButton("&Add new file", 'list-add.png', self.onCreate)
+        self.create_button.setDefault(True)
 
         self.button_file = createButton("...", None, self.selectFile)
         self.path = None
@@ -508,7 +508,7 @@ class NewFileWindow(QtGui.QDialog):
         hbox = QtGui.QHBoxLayout()
         hbox.addWidget(cancel_button)
         hbox.addStretch()
-        hbox.addWidget(create_button)
+        hbox.addWidget(self.create_button)
 
         vbox = QtGui.QVBoxLayout()
         vbox.addLayout(grid)
@@ -530,6 +530,8 @@ class NewFileWindow(QtGui.QDialog):
                 self.delimiter = window.delimiter
                 self.button_file.setText(os.path.basename(path))
                 self.path = path
+
+                self.create_button.setFocus()
 
     def onCreate(self):
         name = self.edit_name.text()
