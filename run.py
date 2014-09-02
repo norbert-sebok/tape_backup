@@ -161,8 +161,9 @@ class MainWindow(QtGui.QMainWindow):
         self.createTable()
 
         layout = QtGui.QVBoxLayout()
+        layout.addLayout(self.buttons_top)
         layout.addWidget(self.view)
-        layout.addLayout(self.buttons_layout)
+        layout.addLayout(self.buttons_bottom)
 
         central = QtGui.QWidget()
         central.setLayout(layout)
@@ -212,12 +213,21 @@ class MainWindow(QtGui.QMainWindow):
         if project_id:
             self.selectById(project_id)
 
+        if not self.getCurrentProject():
+            self.selectFirst()
+
         self.enableDisableButtons()
 
     def selectById(self, id):
         count = self.getCountById(id)
+
         if count is not None:
             index = self.model.createIndex(count, 0)
+            self.view.setCurrentIndex(index)
+
+    def selectFirst(self):
+        if self.model.rows:
+            index = self.model.createIndex(0, 0)
             self.view.setCurrentIndex(index)
 
     def getCountById(self, id):
@@ -234,6 +244,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def createButtons(self):
         self.button_add = createButton(u"&Add new file", 'list-add.png', self.onNewFileClicked)
+        self.button_hide = createButton(u"&Hide", 'edit-copy.png', self.onHideClicked)
+
+        self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
+        self.button_show.setCheckable(True)
+
         self.button_valid = createButton(u"&Validate", 'gtk-apply.png', self.onValidateClicked)
         self.button_split = createButton(u"Split &to chunks", 'accessories.png', self.onSplitClicked)
         self.button_upload = createButton(u"&Upload", 'internet.png', self.onUploadClicked)
@@ -242,24 +257,30 @@ class MainWindow(QtGui.QMainWindow):
         self.button_pause = createButton(u"&Pause", 'media-pause.png', self.onPauseClicked)
         self.button_stop = createButton(u"&Stop", 'media-stop.png', self.onStopClicked)
 
-        self.buttons_layout = QtGui.QHBoxLayout()
-        self.buttons_layout.addWidget(self.button_add)
-        self.buttons_layout.addSpacing(12)
-        self.buttons_layout.addWidget(self.button_valid)
-        self.buttons_layout.addWidget(self.button_split)
-        self.buttons_layout.addWidget(self.button_upload)
-        self.buttons_layout.addSpacing(12)
-        self.buttons_layout.addWidget(self.button_open)
-        self.buttons_layout.addSpacing(12)
-        self.buttons_layout.addWidget(self.button_pause)
-        self.buttons_layout.addWidget(self.button_continue)
-        self.buttons_layout.addWidget(self.button_stop)
-        self.buttons_layout.addStretch()
+        self.buttons_top = QtGui.QHBoxLayout()
+        self.buttons_top.addWidget(self.button_add)
+        self.buttons_top.addSpacing(12)
+        self.buttons_top.addWidget(self.button_hide)
+        self.buttons_top.addWidget(self.button_show)
+        self.buttons_top.addStretch()
+
+        self.buttons_bottom = QtGui.QHBoxLayout()
+        self.buttons_bottom.addWidget(self.button_valid)
+        self.buttons_bottom.addWidget(self.button_split)
+        self.buttons_bottom.addWidget(self.button_upload)
+        self.buttons_bottom.addSpacing(12)
+        self.buttons_bottom.addWidget(self.button_open)
+        self.buttons_bottom.addSpacing(12)
+        self.buttons_bottom.addWidget(self.button_pause)
+        self.buttons_bottom.addWidget(self.button_continue)
+        self.buttons_bottom.addWidget(self.button_stop)
+        self.buttons_bottom.addStretch()
 
     def enableDisableButtons(self):
         p = self.getCurrentProject()
 
         if p:
+            self.button_hide.setEnabled(bool(p))
             self.button_valid.setEnabled(bool(not p.in_progress and not p.validated))
             self.button_split.setEnabled(bool(not p.in_progress and p.validated and not p.chunked))
             self.button_upload.setEnabled(bool(not p.in_progress and p.chunked and not p.uploaded))
@@ -268,6 +289,7 @@ class MainWindow(QtGui.QMainWindow):
             self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
             self.button_stop.setEnabled(bool(p.in_progress))
         else:
+            self.button_hide.setEnabled(False)
             self.button_valid.setEnabled(False)
             self.button_split.setEnabled(False)
             self.button_upload.setEnabled(False)
@@ -285,6 +307,37 @@ class MainWindow(QtGui.QMainWindow):
             form_names = result['form_names']
             window = NewFileWindow(form_names)
             window.exec_()
+
+    def onHideClicked(self):
+        self.view.setFocus()
+
+        project = self.getCurrentProject()
+        if not project:
+            return
+
+        if project.visible:
+            title, text = "Hide", "Hide the selected project?"
+        else:
+            title, text = "Show", "Set the selected project visible?"
+        
+        if choosedYes(self, title, text):
+            project.visible = not project.visible
+            project.save()
+            self.reloadTable()
+
+    def onShowClicked(self):
+        self.view.setFocus()
+
+        if self.button_show.isChecked():
+            text = "&Show"
+            visible = False
+        else:
+            text = "&Hide"
+            visible = True
+
+        self.button_hide.setText(text)
+        self.model.visible = visible
+        self.reloadTable()
 
     def onValidateClicked(self):
         self.view.setFocus()
@@ -378,10 +431,11 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def __init__(self):
         super(TableModel, self).__init__()
+        self.visible = True
         self.loadRows()
 
     def loadRows(self):
-        self.rows = [self.loadRow(p) for p in models.getProjects()]
+        self.rows = [self.loadRow(p) for p in models.getProjects(self.visible)]
 
     def loadRow(self, p):
         validated = "{:,}".format(p.records_validated or 0)
