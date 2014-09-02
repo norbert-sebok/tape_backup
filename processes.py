@@ -134,9 +134,6 @@ class ValidationAndSplitProcess(Process):
         self.createFolder()
         self.converters = getConverters(self.project)
 
-        self.project.delimiter = ','
-        self.project.save()
-
         self.chunk_count = 0
         self.records_validated = 0
         self.records_invalid = 0

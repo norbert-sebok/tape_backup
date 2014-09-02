@@ -118,13 +118,14 @@ def setLoginToken(value):
 # -----------------------------------------------------------------------------
 # FUNCTIONS - PROJECT
 
-def addProject(name, form_name, type_name, path, project_token):
+def addProject(name, form_name, type_name, path, project_token, delimiter):
     project = Project(
         name=name,
         form_name=form_name,
         type_name=type_name,
         path=path,
         project_token=project_token,
+        delimiter=delimiter,
         status="Ready for validation",
         visible=True
         )

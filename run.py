@@ -468,6 +468,7 @@ class NewFileWindow(QtGui.QDialog):
     def __init__(self, form_names):
         super(NewFileWindow, self).__init__()
         self.form_names = form_names
+        self.delimiter = None
         self.buildWidgets()
 
     def buildWidgets(self):
@@ -522,8 +523,13 @@ class NewFileWindow(QtGui.QDialog):
         path, _ = QtGui.QFileDialog().getOpenFileName(None, title, default)
 
         if path:
-            self.button_file.setText(os.path.basename(path))
-            self.path = path
+            window = PreviewWindow(path)
+            window.exec_()
+
+            if window.selected:
+                self.delimiter = window.delimiter
+                self.button_file.setText(os.path.basename(path))
+                self.path = path
 
     def onCreate(self):
         name = self.edit_name.text()
@@ -547,9 +553,108 @@ class NewFileWindow(QtGui.QDialog):
 
         if not error:
             project_token = result['project_token']
-            project_id = models.addProject(name, form_name, type_name, self.path, project_token)
+            project_id = models.addProject(
+                name, form_name, type_name, self.path, project_token, self.delimiter
+                )
             main_window.reloadTable(project_id)
             self.close()
+
+
+class PreviewWindow(QtGui.QDialog):
+
+    def __init__(self, path):
+        super(PreviewWindow, self).__init__()
+
+        self.lines = list(self.readFirstLines(path))
+        self.delimiter = ','
+        self.selected = False
+
+        self.buildWidgets()
+
+    def readFirstLines(self, path):
+        with open(path) as f:
+            for count, line in enumerate(f):
+                if count < 50:
+                    yield line.replace('\n', '').replace('\r', '')
+                else:
+                    return
+
+    def buildWidgets(self):
+        setTitleAndIcon(self, "Select delimiter", 'list-add.png')
+        self.setMinimumWidth(800)
+        self.setMinimumHeight(500)
+
+        label = QtGui.QLabel(u"<b>Delimiter:</b>")
+
+        self.edit_delimiter = QtGui.QLineEdit(self.delimiter)
+        self.edit_delimiter.setMaximumWidth(25)
+        self.edit_delimiter.selectAll()
+        self.edit_delimiter.textEdited.connect(self.onTextEdited)
+
+        self.model = PreviewModel()
+        self.view = QtGui.QTableView()
+        self.view.setModel(self.model)
+
+        cancel_button = createButton("Cancel", 'gtk-cancel.png', self.close)
+        select_button = createButton("&Select delimiter", 'list-add.png', self.onSelect)
+        select_button.setDefault(True)
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(label)
+        hbox.addWidget(self.edit_delimiter)
+        hbox.addStretch()
+
+        hbox_button = QtGui.QHBoxLayout()
+        hbox_button.addWidget(cancel_button)
+        hbox_button.addStretch()
+        hbox_button.addWidget(select_button)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(hbox)
+        vbox.addWidget(self.view)
+        vbox.addWidget(getHorizontalLine())
+        vbox.addLayout(hbox_button)
+
+        self.setLayout(vbox)
+        self.onTextEdited(self.edit_delimiter.text())
+
+    def onTextEdited(self, delimiter):
+        self.delimiter = delimiter
+        self.model.calcRows(self.lines, self.delimiter)
+        self.model.reset()
+        self.view.resizeColumnsToContents()
+
+    def onSelect(self):
+        self.selected = True
+        self.close()
+
+
+class PreviewModel(QtCore.QAbstractTableModel):
+
+    rows = []
+
+    def calcRows(self, lines, delimiter):
+        if delimiter:
+            self.rows = [line.split(delimiter) for line in lines]
+        else:
+            self.rows = [[line] for line in lines]
+
+    def rowCount(self, parent):
+        return len(self.rows)
+
+    def columnCount(self, parent):
+        return len(self.rows[0]) if self.rows else 0
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.rows[index.row()][index.column()]
+
+    def headerData(self, num, orientation, role):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return "{}. column".format(num + 1)
+            elif orientation == QtCore.Qt.Vertical:
+                return "{}.".format(num + 1)
 
 
 # -----------------------------------------------------------------------------
