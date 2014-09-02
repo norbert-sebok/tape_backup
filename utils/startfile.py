@@ -2,6 +2,7 @@
 # IMPORTS
 
 # Standard library imports
+import os
 import subprocess
 import sys
 
@@ -14,10 +15,10 @@ import sys
 
 
 def startfile(path):
-    if sys.platform=='win32':
+    if sys.platform == 'win32':
         os.startfile(path)
 
-    elif sys.platform=='darwin':
+    elif sys.platform == 'darwin':
         subprocess.Popen(['open', path])
 
     else:

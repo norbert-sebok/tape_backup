@@ -4,7 +4,6 @@
 # Standard library imports
 import datetime
 import traceback
-import sys
 
 # Related third party imports
 from PySide import QtGui
@@ -34,4 +33,3 @@ def excepthook(exc_type, exc_value, exc_traceback):
 
 # -----------------------------------------------------------------------------
 # MAIN
-

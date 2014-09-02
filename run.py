@@ -318,7 +318,7 @@ class MainWindow(QtGui.QMainWindow):
             title, text = "Hide", "Hide the selected project?"
         else:
             title, text = "Show", "Set the selected project visible?"
-        
+
         if choosedYes(self, title, text):
             project.visible = not project.visible
             project.save()
@@ -627,8 +627,12 @@ class PreviewWindow(QtGui.QDialog):
         self.view.resizeColumnsToContents()
 
     def onSelect(self):
-        if not self.model.rows or len(self.model.rows[0]) == 1:
-            if not choosedYes(self, "Only one column", "There is only one column. Are you sure that this is the right delimiter?"):
+        only_one = (not self.model.rows or len(self.model.rows[0]) == 1)
+
+        if only_one:
+            title = "Only one column"
+            text = "There is only one column. Are you sure that this is the right delimiter?"
+            if not choosedYes(self, title, text):
                 return
 
         self.selected = True
@@ -673,6 +677,7 @@ def choosedYes(window, title, text):
 
     answer = QtGui.QMessageBox.question(window, title, text, yes, no)
     return answer == yes
+
 
 def createButton(text, icon_name, func):
     button = QtGui.QPushButton(text)
@@ -755,6 +760,7 @@ app = QtGui.QApplication(sys.argv)
 
 # Has to import after QApplication is created
 from real_time_server import real_time_server
+real_time_url = real_time_server.startServer()
 
 manager = processes.ProcessManager(app.processEvents)
 

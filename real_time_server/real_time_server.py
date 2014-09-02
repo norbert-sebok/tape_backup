@@ -29,7 +29,14 @@ class Server(Resource):
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 
+def startServer(port=8880):
+    reactor.listenTCP(port, Site(Server()))
+    return getURL(port)
+
+
+def getURL(port):
+    return 'http://localhost:{}'.format(port)
+
+
 # -----------------------------------------------------------------------------
 # MAIN
-
-reactor.listenTCP(8880, Site(Server()))

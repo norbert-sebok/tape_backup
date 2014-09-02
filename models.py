@@ -62,8 +62,8 @@ class Project(Base):
         session.add(self)
         session.commit()
 
-        for func in project_listeners:
-            func(self)
+        for listener in project_listeners:
+            listener(self)
 
     @property
     def full_status(self):
@@ -73,7 +73,6 @@ class Project(Base):
             return self.status + " failed with error: {}".format(self.error)
         else:
             return self.status
-
 
 
 class Chunk(Base):
