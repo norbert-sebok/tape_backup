@@ -246,8 +246,8 @@ class MainWindow(QtGui.QMainWindow):
             return project
 
     def createButtons(self):
-        self.button_add = createButton(u"&Add new file", 'list-add.png', self.onNewFileClicked)
-        self.button_hide = createButton(u"&Hide", 'edit-copy.png', self.onHideClicked)
+        self.button_add = createButton(u"&Add new file...", 'list-add.png', self.onNewFileClicked)
+        self.button_hide = createButton(u"&Hide...", 'edit-copy.png', self.onHideClicked)
 
         self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
         self.button_show.setCheckable(True)
