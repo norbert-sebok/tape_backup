@@ -169,6 +169,8 @@ class MainWindow(QtGui.QMainWindow):
         central.setLayout(layout)
         self.setCentralWidget(central)
 
+        self.view.setFocus()
+
     def setSizeAndPosition(self, width, height):
         desktop = QtGui.QApplication.desktop()
         screen = desktop.screenGeometry(desktop.primaryScreen())
