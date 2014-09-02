@@ -748,6 +748,10 @@ def post_core(route, data):
 # MAIN
 
 app = QtGui.QApplication(sys.argv)
+
+# Has to import after QApplication is created
+import live_server
+
 manager = processes.ProcessManager(app.processEvents)
 
 main_window = MainWindow()
