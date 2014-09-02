@@ -653,7 +653,7 @@ class PreviewModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
                 return "{}. column".format(num + 1)
-            elif orientation == QtCore.Qt.Vertical and :
+            elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
                 return "{}. column".format(num + 1)
 
 
