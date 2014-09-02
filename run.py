@@ -625,6 +625,10 @@ class PreviewWindow(QtGui.QDialog):
         self.view.resizeColumnsToContents()
 
     def onSelect(self):
+        if not self.model.rows or len(self.model.rows[0]) == 1:
+            if not choosedYes(self, "Only one column", "There is only one column. Are you sure that this is the right delimiter?"):
+                return
+
         self.selected = True
         self.close()
 
