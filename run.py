@@ -352,7 +352,7 @@ class MainWindow(QtGui.QMainWindow):
             project.save()
 
             process = processes.ValidationAndSplitProcess(project)
-            manager.addProcess(process)
+            manager.addProcess(project, process)
             QtCore.QTimer().singleShot(10, manager.runProcesses)
 
             self.enableDisableButtons()
@@ -363,7 +363,7 @@ class MainWindow(QtGui.QMainWindow):
         project = self.getCurrentProject()
 
         process = processes.UploadProcess(project, post)
-        manager.addProcess(process)
+        manager.addProcess(project, process)
         QtCore.QTimer().singleShot(10, manager.runProcesses)
 
         self.enableDisableButtons()

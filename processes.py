@@ -2,7 +2,6 @@
 # IMPORTS
 
 # Standard library imports
-import calendar
 import csv
 import datetime
 import json
@@ -22,33 +21,33 @@ import models
 
 
 class ProcessManager(object):
-    
+
     def __init__(self, processEvents):
         self.processEvents = processEvents
-        self.processes = []
+        self.processes = {}
         self.running = False
 
-    def addProcess(self, process):
-        self.processes.append(process)
+    def addProcess(self, project, process):
+        self.processes[project.id] = process
 
     def stopAllProcesses(self):
-        for process in self.processes:
+        for process in self.processes.values():
             process.stopProcess()
 
     def stopProcess(self, project):
-        for process in self.processes:
-            if process.project == project:
-                process.stopProcess()
+        if project.id in self.processes:
+            process = self.processes[project.id]
+            process.stopProcess()
 
     def pauseProcess(self, project):
-        for process in self.processes:
-            if process.project == project:
-                process.pauseProcess()
+        if project.id in self.processes:
+            process = self.processes[project.id]
+            process.pauseProcess()
 
     def continueProcess(self, project):
-        for process in self.processes:
-            if process.project == project:
-                process.continueProcess()
+        if project.id in self.processes:
+            process = self.processes[project.id]
+            process.continueProcess()
 
     def runProcesses(self):
         if not self.running:
@@ -58,20 +57,20 @@ class ProcessManager(object):
 
     def runProcessesCore(self):
         while True:
-            for p in self.processes:
+            for p in self.processes.values():
                 if not p.project.paused:
                     p.runOneStep()
 
             self.processEvents()
 
-            self.processes = [p for p in self.processes if p.project.in_progress]
-            if not self.processes:
+            self.processes = {id: p for (id, p) in self.processes.items() if p.project.in_progress}
+
+            if not self.live_processes:
                 break
 
-            live_processes = [p for p in self.processes if not p.project.paused]
-            if not live_processes:
-                break
-
+    @property
+    def live_processes(self):
+        return [p for p in self.processes.values() if not p.project.paused]
 
 # -----------------------------------------------------------------------------
 # PROCESS
