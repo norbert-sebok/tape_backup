@@ -21,9 +21,10 @@ def excepthook(exc_type, exc_value, exc_traceback):
     lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
 
     with open('log.log', 'a') as f:
-        f.write('{} - Exception:'.format(now))
-        for line in lines:
-            f.write('{} -  {}'.format(now, line))
+        f.write('{} - Exception:\n'.format(now))
+        f.write('\n')
+        f.write(''.join(lines))
+        f.write('\n')
 
     if config.DEBUG:
         traceback.print_exception(exc_type, exc_value, exc_traceback)
@@ -34,4 +35,3 @@ def excepthook(exc_type, exc_value, exc_traceback):
 # -----------------------------------------------------------------------------
 # MAIN
 
-sys.excepthook = excepthook

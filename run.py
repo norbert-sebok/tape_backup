@@ -749,6 +749,8 @@ def post_core(route, data):
 # -----------------------------------------------------------------------------
 # MAIN
 
+sys.excepthook = excepthook.excepthook
+
 app = QtGui.QApplication(sys.argv)
 
 # Has to import after QApplication is created
