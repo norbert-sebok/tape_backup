@@ -76,6 +76,7 @@ class ProcessManager(object):
 # -----------------------------------------------------------------------------
 # PROCESS
 
+
 class Process(object):
 
     def __init__(self, project):
@@ -315,8 +316,8 @@ class UploadProcess(Process):
             self.stopProcess(error)
 
         else:
-           upload_ids = set(result['upload_ids'])
-           return [c for c in self.project.chunks if c.upload_id not in upload_ids]
+            upload_ids = set(result['upload_ids'])
+            return [c for c in self.project.chunks if c.upload_id not in upload_ids]
 
     def calcStatus(self):
         self.project.error = None
