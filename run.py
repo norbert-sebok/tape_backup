@@ -190,6 +190,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setColumnWidths()
 
         self.view.setSelectionBehavior(self.view.SelectRows)
+        self.view.setSelectionMode(self.view.SingleSelection)
         self.view.selectRow(0)
 
         self.view.connect(
