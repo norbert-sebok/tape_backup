@@ -12,11 +12,11 @@ from PySide import QtCore, QtGui
 import requests
 
 # Local application/library specific imports
-import config
-import excepthook
+from utils import config
+from utils import excepthook
+from utils import startfile
 import models
 import processes
-import startfile
 
 # -----------------------------------------------------------------------------
 # WINDOWS
@@ -750,7 +750,7 @@ def post_core(route, data):
 app = QtGui.QApplication(sys.argv)
 
 # Has to import after QApplication is created
-import real_time_server
+from real_time_server import real_time_server
 
 manager = processes.ProcessManager(app.processEvents)
 

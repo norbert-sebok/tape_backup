@@ -13,8 +13,8 @@ import zipfile
 # Related third party imports
 
 # Local application/library specific imports
-import config
-import excepthook
+from utils import config
+from utils import excepthook
 import models
 
 # -----------------------------------------------------------------------------

@@ -11,8 +11,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship, sessionmaker
 
 # Local application/library specific imports
-import config
-
+from utils import config
 
 # -----------------------------------------------------------------------------
 # TABLES
