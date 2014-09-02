@@ -651,10 +651,10 @@ class PreviewModel(QtCore.QAbstractTableModel):
 
     def headerData(self, num, orientation, role):
         if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+            if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
                 return "{}. column".format(num + 1)
-            elif orientation == QtCore.Qt.Vertical:
-                return "{}.".format(num + 1)
+            elif orientation == QtCore.Qt.Vertical and :
+                return "{}. column".format(num + 1)
 
 
 # -----------------------------------------------------------------------------
