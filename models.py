@@ -31,6 +31,7 @@ class Project(Base):
     __tablename__ = 'project'
 
     id = Column(Integer, primary_key=True)
+    visible = Column(Boolean)
 
     name = Column(String)
     form_name = Column(String)
@@ -125,7 +126,8 @@ def addProject(name, form_name, type_name, path, project_token):
         type_name=type_name,
         path=path,
         project_token=project_token,
-        status="Ready for validation"
+        status="Ready for validation",
+        visible=True
         )
 
     project.save()
@@ -133,8 +135,8 @@ def addProject(name, form_name, type_name, path, project_token):
     return project.id
 
 
-def getProjects():
-    return session.query(Project).all()
+def getProjects(visible):
+    return session.query(Project).filter(Project.visible==visible).all()
 
 
 def clearBrokenProjectsOnAppStart():
