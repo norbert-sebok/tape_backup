@@ -31,4 +31,7 @@ def post_data(project_id, rows):
 # MAIN
 
 print get_test(1)
-print post_data(1, [{'a': 1}, {'a': 2}])
+
+rows = [[i, i*10, 'lkjkhj', '2014-04-04'] for i in range(1000)]
+print post_data(1, rows)
+
