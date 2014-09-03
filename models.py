@@ -42,6 +42,7 @@ class Project(Base):
     delimiter = Column(String)
 
     chunks_folder = Column(String)
+    posts_folder = Column(String)
     errors_file = Column(String)
 
     status = Column(String)

@@ -2,7 +2,9 @@
 # IMPORTS
 
 # Standard library imports
+import datetime
 import json
+import os
 import re
 import sys
 
@@ -33,13 +35,13 @@ class Server(Resource):
 
     def render_GET(self, request):
         try:
-            id, error = getRunningProjectId('test', request.uri)
+            project, error = getRunningProject('test', request.uri)
 
             if error:
                 request.setResponseCode(403)
                 return error
             else:
-                return "Real time server #{} is accepting requests".format(id)
+                return "Real time server #{} is accepting requests".format(project.id)
 
         except:
             request.setResponseCode(500)
@@ -47,14 +49,14 @@ class Server(Resource):
 
     def render_POST(self, request):
         try:
-            id, error = getRunningProjectId('post', request.uri)
+            project, error = getRunningProject('post', request.uri)
 
             if error:
                 request.setResponseCode(403)
                 return error
             else:
-                data = json.loads(request.content.read())
-                message = self.manager.processPost(id, data)
+                rows = json.loads(request.content.read())
+                message = processPost(project, rows)
                 return message
 
         except:
@@ -65,12 +67,14 @@ class Server(Resource):
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 
-def getRunningProjectId(name, uri):
+def getRunningProject(name, uri):
     id = getProjectId(name, uri)
 
     if id is None:
+        project = None
         error = "Invalid URL"
     else:
+
         project = models.getProjectById(id)
         if not project:
             error = "There is no real time server with ID #{}".format(id)
@@ -79,7 +83,7 @@ def getRunningProjectId(name, uri):
         else:
             error = None
 
-    return id, error
+    return project, error
 
 
 def getProjectId(name, uri):
@@ -93,6 +97,23 @@ def getProjectId(name, uri):
 def handleException():
     excepthook.excepthook(sys.exc_type, sys.exc_value, sys.exc_traceback)
     return "Server error: {}".format(sys.exc_value)
+
+
+def processPost(project, rows):
+    folder = os.path.join(config.DB_FOLDER, str(project.id), 'posts')
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    project.posts_folder = folder
+    project.save()
+
+    now = '{:%y%m%d_%H%M%S_%f}'.format(datetime.datetime.now())
+    path = os.path.join(folder, now + '.json')
+
+    with open(path, 'w') as f:
+        json.dump(rows, f)
+
+    return "{} row(s) processed".format(len(rows))
 
 
 def startServer(manager):
