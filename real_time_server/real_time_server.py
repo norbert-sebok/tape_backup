@@ -13,6 +13,7 @@ from twisted.web.resource import Resource
 from twisted.web.server import Site
 
 # Local application/library specific imports
+from utils import config
 
 # -----------------------------------------------------------------------------
 # CLASSES
@@ -29,13 +30,9 @@ class Server(Resource):
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 
-def startServer(port=8880):
-    reactor.listenTCP(port, Site(Server()))
-    return getURL(port)
 
-
-def getURL(port):
-    return 'http://localhost:{}'.format(port)
+def startServer():
+    reactor.listenTCP(config.PORT, Site(Server()))
 
 
 # -----------------------------------------------------------------------------

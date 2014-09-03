@@ -74,6 +74,10 @@ class Project(Base):
         else:
             return self.status
 
+    @property
+    def server_url(self):
+        return '{}/{}/post'.format(config.URL, self.id)
+
 
 class Chunk(Base):
     __tablename__ = 'chunk'
