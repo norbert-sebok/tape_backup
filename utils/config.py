@@ -15,5 +15,8 @@ LOGO_PATH = 'images/logo.png'
 # The folder of the database and temporary filess
 DB_FOLDER = 'db'
 
+# Number of rows in one chunk to be uploaded to the server in one POST call
+ROWS_PER_CHUNK = 400
+
 # Debug mode prints exceptions
 DEBUG = True
