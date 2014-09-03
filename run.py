@@ -246,7 +246,8 @@ class MainWindow(QtGui.QMainWindow):
             return project
 
     def createButtons(self):
-        self.button_add = createButton(u"&Add new file...", 'list-add.png', self.onNewFileClicked)
+        self.button_add_file = createButton(u"&Add file...", 'list-add.png', self.onNewFileClicked)
+        self.button_add_server = createButton(u"Add serve&r...", 'list-add.png', self.onNewServerClicked)
         self.button_hide = createButton(u"&Hide...", 'edit-copy.png', self.onHideClicked)
 
         self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
@@ -260,7 +261,8 @@ class MainWindow(QtGui.QMainWindow):
         self.button_stop = createButton(u"&Stop", 'media-stop.png', self.onStopClicked)
 
         self.buttons_top = QtGui.QHBoxLayout()
-        self.buttons_top.addWidget(self.button_add)
+        self.buttons_top.addWidget(self.button_add_file)
+        self.buttons_top.addWidget(self.button_add_server)
         self.buttons_top.addSpacing(12)
         self.buttons_top.addWidget(self.button_hide)
         self.buttons_top.addWidget(self.button_show)
@@ -299,12 +301,18 @@ class MainWindow(QtGui.QMainWindow):
 
     def onNewFileClicked(self):
         self.view.setFocus()
+        self.addNew(is_server=False)
 
+    def onNewServerClicked(self):
+        self.view.setFocus()
+        self.addNew(is_server=True)
+
+    def addNew(self, is_server):
         result, error = post('get_form_names', {})
 
         if not error:
             form_names = result['form_names']
-            window = NewFileWindow(form_names)
+            window = AddNewWindow(is_server, form_names)
             window.exec_()
 
     def onHideClicked(self):
@@ -463,16 +471,18 @@ class TableModel(QtCore.QAbstractTableModel):
             return self.header[col]
 
 
-class NewFileWindow(QtGui.QDialog):
+class AddNewWindow(QtGui.QDialog):
 
-    def __init__(self, form_names):
-        super(NewFileWindow, self).__init__()
+    def __init__(self, is_server, form_names):
+        super(AddNewWindow, self).__init__()
+        self.is_server = is_server
         self.form_names = form_names
         self.delimiter = None
         self.buildWidgets()
 
     def buildWidgets(self):
-        setTitleAndIcon(self, "Add new file", 'list-add.png')
+        text = "Add new server" if self.is_server else "Add new file"
+        setTitleAndIcon(self, text, 'list-add.png')
         self.setMinimumWidth(300)
 
         label_name = QtGui.QLabel(u"Project name:")
@@ -481,8 +491,9 @@ class NewFileWindow(QtGui.QDialog):
         label_form = QtGui.QLabel(u"Form name:")
         label_form.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
 
-        label_file = QtGui.QLabel(u"File:")
-        label_file.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
+        if not self.is_server:
+            label_file = QtGui.QLabel(u"File:")
+            label_file.setAlignment(int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight))
 
         self.edit_name = QtGui.QLineEdit()
 
@@ -491,19 +502,23 @@ class NewFileWindow(QtGui.QDialog):
             self.drop_form.addItem(name)
 
         cancel_button = createButton("Cancel", 'gtk-cancel.png', self.close)
-        self.create_button = createButton("&Add new file", 'list-add.png', self.onCreate)
+        self.create_button = createButton("&" + text, 'list-add.png', self.onCreate)
         self.create_button.setDefault(True)
 
-        self.button_file = createButton("...", None, self.selectFile)
+        if not self.is_server:
+            self.button_file = createButton("...", None, self.selectFile)
+
         self.path = None
 
         grid = QtGui.QGridLayout()
         grid.addWidget(label_name, 0, 0)
         grid.addWidget(label_form, 1, 0)
-        grid.addWidget(label_file, 2, 0)
+        if not self.is_server:
+            grid.addWidget(label_file, 2, 0)
         grid.addWidget(self.edit_name, 0, 1)
         grid.addWidget(self.drop_form, 1, 1)
-        grid.addWidget(self.button_file, 2, 1)
+        if not self.is_server:
+            grid.addWidget(self.button_file, 2, 1)
 
         hbox = QtGui.QHBoxLayout()
         hbox.addWidget(cancel_button)
@@ -536,13 +551,15 @@ class NewFileWindow(QtGui.QDialog):
     def onCreate(self):
         name = self.edit_name.text()
         form_name = self.drop_form.currentText()
-        type_name = "File"
+        type_name = "Server" if self.is_server else "File"
 
         checks = [
             (name, "Please set the project name", self.edit_name),
-            (form_name, "Please select the form name", self.drop_form),
-            (self.path, "Please select a file", self.button_file)
+            (form_name, "Please select the form name", self.drop_form)
             ]
+
+        if not self.is_server:
+            checks.append((self.path, "Please select a file", self.button_file))
 
         for value, text, widget in checks:
             if not value:

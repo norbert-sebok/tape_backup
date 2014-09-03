@@ -124,7 +124,7 @@ def addProject(name, form_name, type_name, path, project_token, delimiter):
         path=path,
         project_token=project_token,
         delimiter=delimiter,
-        status="Ready for validation",
+        status="Ready for validation" if type_name=='file' else "Stopped",
         visible=True
         )
 
