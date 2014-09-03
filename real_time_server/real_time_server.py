@@ -2,6 +2,7 @@
 # IMPORTS
 
 # Standard library imports
+import json
 import re
 import sys
 
@@ -27,6 +28,9 @@ class Server(Resource):
 
     isLeaf = True
 
+    def __init__(self, manager):
+        self.manager = manager
+
     def render_GET(self, request):
         try:
             id, error = getRunningProjectId('test', request.uri)
@@ -42,8 +46,20 @@ class Server(Resource):
             return handleException()
 
     def render_POST(self, request):
-        print 'post'
-        return 'ok'
+        try:
+            id, error = getRunningProjectId('post', request.uri)
+
+            if error:
+                request.setResponseCode(403)
+                return error
+            else:
+                data = json.loads(request.content.read())
+                message = self.manager.processPost(id, data)
+                return message
+
+        except:
+            request.setResponseCode(500)
+            return handleException()
 
 
 # -----------------------------------------------------------------------------
@@ -79,8 +95,9 @@ def handleException():
     return "Server error: {}".format(sys.exc_value)
 
 
-def startServer():
-    reactor.listenTCP(config.PORT, Site(Server()))
+def startServer(manager):
+    server = Server(manager)
+    reactor.listenTCP(config.PORT, Site(server))
 
 
 # -----------------------------------------------------------------------------

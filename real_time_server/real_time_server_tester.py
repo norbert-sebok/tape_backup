@@ -31,4 +31,4 @@ def post_data(project_id, rows):
 # MAIN
 
 print get_test(1)
-#~ print post_data(1, [{'a': 1}, {'a': 2}])
+print post_data(1, [{'a': 1}, {'a': 2}])

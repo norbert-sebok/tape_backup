@@ -801,12 +801,11 @@ def post_core(route, data):
 sys.excepthook = excepthook.excepthook
 
 app = QtGui.QApplication(sys.argv)
+manager = processes.ProcessManager(app.processEvents)
 
 # Should import after QApplication is created
 from real_time_server import real_time_server
-real_time_url = real_time_server.startServer()
-
-manager = processes.ProcessManager(app.processEvents)
+real_time_url = real_time_server.startServer(manager)
 
 main_window = MainWindow()
 connecting_window = ConnectingWindow()

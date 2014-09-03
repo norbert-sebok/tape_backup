@@ -30,6 +30,11 @@ class ProcessManager(object):
     def addProcess(self, project, process):
         self.processes[project.id] = process
 
+    def processPost(self, project_id, rows):
+        process = self.processes[project_id]
+        message = process.handlePost(rows)
+        return message
+
     def stopAllProcesses(self):
         for process in self.processes.values():
             process.stopProcess()
@@ -345,6 +350,10 @@ class ServerProcess(Process):
 
         self.project.status = "Running... (idle)"
         self.project.save()
+
+    def handlePost(self, rows):
+        print rows
+        return "{} row(s) processed".format(len(rows))
 
     def stopProcess(self, error=None):
         self.project.status = "Stopped"
