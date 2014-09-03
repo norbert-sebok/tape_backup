@@ -324,4 +324,31 @@ class UploadProcess(Process):
 
 
 # -----------------------------------------------------------------------------
+# SERVER PROCESS
+
+
+class ServerProcess(Process):
+
+    def __init__(self, project, post):
+        self.post = post
+
+        super(ServerProcess, self).__init__(project)
+
+    def runProcess(self):
+        self.project.status = "Running..."
+        self.project.save()
+
+        for i in range(10):
+            print i
+            yield
+
+        self.project.status = "Running... (idle)"
+        self.project.save()
+
+    def stopProcess(self, error=None):
+        self.project.status = "Stopped"
+        super(ServerProcess, self).stopProcess(error)
+
+
+# -----------------------------------------------------------------------------
 # MAIN
