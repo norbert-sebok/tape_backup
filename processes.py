@@ -22,7 +22,8 @@ import models
 
 class ProcessManager(object):
 
-    def __init__(self, processEvents):
+    def __init__(self, post, processEvents):
+        self.post = post
         self.processEvents = processEvents
         self.processes = {}
         self.running = False
@@ -31,6 +32,10 @@ class ProcessManager(object):
         self.processes[project.id] = process
 
     def processJsons(self, project):
+        if not project.id in self.processes:
+            process = ServerProcess(project, self.post)
+            self.addProcess(project, process)
+
         process = self.processes[project.id]
         process.processJsons()
         self.runProcesses()
@@ -136,29 +141,13 @@ class Process(object):
 
 class ValidationAndSplitProcess(Process):
 
-    rows_per_chunk = 400
-
     def runProcess(self):
-        self.createFolder()
         self.converters = getConverters(self.project)
-
-        self.records_validated = 0
-        self.records_invalid = 0
 
         with open(self.project.path) as f:
             reader = csv.reader(f, delimiter=str(self.project.delimiter))
-
-            chunk = []
-            for row in reader:
-                chunk.append(row)
-
-                if len(chunk) == self.rows_per_chunk:
-                    processChunk(self.project, self.converters, chunk)
-                    chunk = []
-                    yield
-
-            if chunk:
-                processChunk(self.project, self.converters, chunk)
+            for _ in processRows(self.project, self.converters, reader):
+                yield
 
         self.markAsFinished()
 
@@ -166,13 +155,20 @@ class ValidationAndSplitProcess(Process):
         self.project.status = "Ready for uploading"
         self.project.save()
 
-    def createFolder(self):
-        folder = os.path.join(config.DB_FOLDER, str(self.project.id), 'chunks')
-        if not os.path.exists(folder):
-            os.makedirs(folder)
 
-        self.project.chunks_folder = folder
-        self.project.save()
+def processRows(project, converters, rows):
+    chunk = []
+
+    for row in rows:
+        chunk.append(row)
+
+        if len(chunk) == config.ROWS_PER_CHUNK:
+            processChunk(project, converters, chunk)
+            chunk = []
+            yield
+
+    if chunk:
+        processChunk(project, converters, chunk)
 
 
 def processChunk(project, converters, rows):
@@ -333,7 +329,9 @@ class UploadProcess(Process):
 class ServerProcess(Process):
 
     def __init__(self, project, post):
+        self.project = project
         self.post = post
+        self.converters = getConverters(project)
 
         super(ServerProcess, self).__init__(project)
 
@@ -347,13 +345,18 @@ class ServerProcess(Process):
         self.project.save()
 
         folder = self.project.posts_folder
-        
-        for name in sorted(os.listdir(folder)):
-            path = os.path.join(folder, name)
-            os.remove(path)
-            self.project.status = "Processing JSON file..."
-            self.project.save()
-            yield
+
+        if folder:
+            for name in sorted(os.listdir(folder)):
+                path = os.path.join(folder, name)
+                with open(path) as f:
+                    rows = json.load(f)
+
+                str_rows = [[str(v) for v in row] for row in rows]
+                for _ in processRows(self.project, self.converters, str_rows):
+                    yield
+
+                os.remove(path)
 
         self.project.status = "Running... (idle)"
         self.project.idle = True
