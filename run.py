@@ -2,6 +2,7 @@
 # IMPORTS
 
 # Standard library imports
+import functools
 import json
 import os
 import time
@@ -795,6 +796,11 @@ def post_core(route, data):
         raise Exception(r.content)
 
 
+def processJsons(project):
+    func = functools.partial(manager.processJsons, project)
+    QtCore.QTimer().singleShot(10, func)
+
+
 # -----------------------------------------------------------------------------
 # MAIN
 
@@ -805,7 +811,7 @@ manager = processes.ProcessManager(app.processEvents)
 
 # Should import after QApplication is created
 from real_time_server import real_time_server
-real_time_url = real_time_server.startServer(manager)
+real_time_url = real_time_server.startServer(processJsons)
 
 main_window = MainWindow()
 connecting_window = ConnectingWindow()

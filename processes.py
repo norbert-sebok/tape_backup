@@ -30,6 +30,11 @@ class ProcessManager(object):
     def addProcess(self, project, process):
         self.processes[project.id] = process
 
+    def processJsons(self, project):
+        process = self.processes[project.id]
+        process.processJsons()
+        self.runProcesses()
+
     def stopAllProcesses(self):
         for process in self.processes.values():
             process.stopProcess()
@@ -70,7 +75,7 @@ class ProcessManager(object):
 
     @property
     def live_processes(self):
-        return [p for p in self.processes.values() if not p.project.paused]
+        return [p for p in self.processes.values() if not p.project.paused and not p.project.idle]
 
 # -----------------------------------------------------------------------------
 # PROCESS
@@ -80,6 +85,9 @@ class Process(object):
 
     def __init__(self, project):
         self.project = project
+        self.startProcess()
+
+    def startProcess(self):
         self.project.in_progress = True
         self.project.save()
 
@@ -334,6 +342,10 @@ class ServerProcess(Process):
 
         super(ServerProcess, self).__init__(project)
 
+    def processJsons(self):
+        if self.project.idle:
+            self.startProcess()
+
     def runProcess(self):
         self.project.status = "Running..."
         self.project.idle = False
@@ -341,12 +353,11 @@ class ServerProcess(Process):
 
         folder = self.project.posts_folder
         
-        for name in os.listdir(folder):
+        for name in sorted(os.listdir(folder)):
             path = os.path.join(folder, name)
+            os.remove(path)
             self.project.status = "Processing JSON file..."
             self.project.save()
-            import time
-            time.sleep(0.5)
             yield
 
         self.project.status = "Running... (idle)"

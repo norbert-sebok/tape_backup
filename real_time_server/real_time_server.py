@@ -30,8 +30,8 @@ class Server(Resource):
 
     isLeaf = True
 
-    def __init__(self, manager):
-        self.manager = manager
+    def __init__(self, processJsons):
+        self.processJsons = processJsons
 
     def render_GET(self, request):
         try:
@@ -57,6 +57,7 @@ class Server(Resource):
             else:
                 rows = json.loads(request.content.read())
                 message = processPost(project, rows)
+                self.processJsons(project)
                 return message
 
         except:
@@ -116,8 +117,8 @@ def processPost(project, rows):
     return "{} row(s) processed".format(len(rows))
 
 
-def startServer(manager):
-    server = Server(manager)
+def startServer(processJsons):
+    server = Server(processJsons)
     reactor.listenTCP(config.PORT, Site(server))
 
 
