@@ -142,7 +142,6 @@ class ValidationAndSplitProcess(Process):
         self.createFolder()
         self.converters = getConverters(self.project)
 
-        self.chunk_count = 0
         self.records_validated = 0
         self.records_invalid = 0
 
@@ -154,43 +153,18 @@ class ValidationAndSplitProcess(Process):
                 chunk.append(row)
 
                 if len(chunk) == self.rows_per_chunk:
-                    self.processChunk(chunk)
-                    self.calcStatus()
+                    processChunk(self.project, self.converters, chunk)
                     chunk = []
                     yield
 
             if chunk:
-                self.processChunk(chunk)
+                processChunk(self.project, self.converters, chunk)
 
-        self.calcStatus()
         self.markAsFinished()
 
         self.project.validated = True
         self.project.status = "Ready for uploading"
         self.project.save()
-
-    def processChunk(self, chunk):
-        name = '{:09d}.json.zip'.format(self.chunk_count)
-        path = os.path.join(self.project.chunks_folder, name)
-
-        data = list(self.convertedRows(chunk))
-
-        json_str = json.dumps(data)
-        with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
-            z.writestr('chunk.csv', json_str)
-
-        self.chunk_count += 1
-        self.records_validated += len(data)
-
-        models.addOrUpdateChunk(self.project, path, len(data))
-
-    def convertedRows(self, rows):
-        for row in rows:
-            try:
-                yield [func(value) for func, value in zip(self.converters, row)]
-            except:
-                self.records_invalid += 1
-                self.saveToErrorsFile(row)
 
     def createFolder(self):
         folder = os.path.join(config.DB_FOLDER, str(self.project.id), 'chunks')
@@ -200,25 +174,46 @@ class ValidationAndSplitProcess(Process):
         self.project.chunks_folder = folder
         self.project.save()
 
-    def calcStatus(self):
-        self.project.status = "Validating and splitting..."
-        self.project.error = None
-        self.project.records_chunked = self.records_validated
-        self.project.records_validated = self.records_validated
-        self.project.records_invalid = self.records_invalid
-        self.project.save()
 
-    def saveToErrorsFile(self, row):
-        folder = os.path.join(config.DB_FOLDER, str(self.project.id))
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+def processChunk(project, converters, rows):
+    name = '{:%y%m%d_%H%M%S_%f}.json.zip'.format(datetime.datetime.now())
+    path = os.path.join(project.chunks_folder, name)
 
-        self.project.errors_file = os.path.join(folder, 'validating_errors.csv')
-        self.project.save()
+    valid_rows = list(convertedRows(project, converters, rows))
 
-        with open(self.project.errors_file, 'a') as f:
-            line = self.project.delimiter.join(row)
-            f.write(line + '\n')
+    json_str = json.dumps(valid_rows)
+    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('chunk.csv', json_str)
+
+    project.status = "Validating and splitting..."
+    project.records_chunked += len(valid_rows)
+    project.records_validated += len(valid_rows)
+    project.records_invalid += len(rows) - len(valid_rows)
+    project.error = None
+    project.save()
+
+    models.addOrUpdateChunk(project, path, len(valid_rows))
+
+
+def convertedRows(project, converters, rows):
+    for row in rows:
+        try:
+            yield [func(value) for func, value in zip(converters, row)]
+        except:
+            saveToErrorsFile(project, row)
+
+
+def saveToErrorsFile(project, row):
+    folder = os.path.join(config.DB_FOLDER, str(project.id))
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    project.errors_file = os.path.join(folder, 'validating_errors.csv')
+    project.save()
+
+    with open(project.errors_file, 'a') as f:
+        line = project.delimiter.join(row)
+        f.write(line + '\n')
 
 
 def getConverters(project):

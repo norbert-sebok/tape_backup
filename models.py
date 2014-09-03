@@ -48,6 +48,7 @@ class Project(Base):
     status = Column(String)
     in_progress = Column(Boolean)
     stopped = Column(Boolean)
+    idle = Column(Boolean)
     error = Column(String)
 
     validated = Column(Boolean)
@@ -130,7 +131,10 @@ def addProject(name, form_name, type_name, path, project_token, delimiter):
         project_token=project_token,
         delimiter=delimiter,
         status="Ready for validation" if type_name=='file' else "Stopped",
-        visible=True
+        visible=True,
+        records_chunked=0,
+        records_validated=0,
+        records_invalid=0
         )
 
     project.save()
