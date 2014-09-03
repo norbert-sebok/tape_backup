@@ -371,17 +371,11 @@ class MainWindow(QtGui.QMainWindow):
         if not project:
             return
 
-        result, error = post('get_validations', {'form_name': project.form_name})
+        process = processes.ValidationAndSplitProcess(project)
+        manager.addProcess(project, process)
+        QtCore.QTimer().singleShot(10, manager.runProcesses)
 
-        if not error:
-            project.validation = result['validation']
-            project.save()
-
-            process = processes.ValidationAndSplitProcess(project)
-            manager.addProcess(project, process)
-            QtCore.QTimer().singleShot(10, manager.runProcesses)
-
-            self.enableDisableButtons()
+        self.enableDisableButtons()
 
     def onUploadClicked(self):
         self.view.setFocus()
@@ -597,14 +591,19 @@ class AddNewWindow(QtGui.QDialog):
 
         data = {'name': name, 'form_name': form_name, 'type_name': type_name}
         result, error = post('get_project_token', data)
-
         if not error:
             project_token = result['project_token']
-            project_id = models.addProject(
-                name, form_name, type_name, self.path, project_token, self.delimiter
-                )
-            main_window.reloadTable(project_id)
-            self.close()
+
+            result, error = post('get_validations', {'form_name': form_name})
+            if not error:
+                validation = result['validation']
+
+                project_id = models.addProject(
+                    name, form_name, type_name, self.path, project_token,
+                    self.delimiter, validation
+                    )
+                main_window.reloadTable(project_id)
+                self.close()
 
 
 class PreviewWindow(QtGui.QDialog):
@@ -807,7 +806,7 @@ def processJsons(project):
 sys.excepthook = excepthook.excepthook
 
 app = QtGui.QApplication(sys.argv)
-manager = processes.ProcessManager(app.processEvents)
+manager = processes.ProcessManager(post, app.processEvents)
 
 # Should import after QApplication is created
 from real_time_server import real_time_server
