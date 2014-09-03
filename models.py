@@ -47,7 +47,6 @@ class Project(Base):
 
     status = Column(String)
     in_progress = Column(Boolean)
-    serving = Column(Boolean)
     stopped = Column(Boolean)
     error = Column(String)
 

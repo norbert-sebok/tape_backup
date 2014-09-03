@@ -336,7 +336,6 @@ class ServerProcess(Process):
 
     def runProcess(self):
         self.project.status = "Running..."
-        self.project.serving = True
         self.project.save()
 
         for i in range(10):
@@ -345,11 +344,6 @@ class ServerProcess(Process):
 
         self.project.status = "Running... (idle)"
         self.project.save()
-
-    def stopProcess(self, error=None):
-        self.project.status = "Stopped"
-        self.project.serving = False
-        super(ServerProcess, self).stopProcess(error)
 
 
 # -----------------------------------------------------------------------------
