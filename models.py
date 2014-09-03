@@ -122,21 +122,28 @@ def setLoginToken(value):
 # -----------------------------------------------------------------------------
 # FUNCTIONS - PROJECT
 
-def addProject(name, form_name, type_name, path, project_token, delimiter):
+def addProject(name, form_name, type_name, path, project_token, delimiter, validation):
     project = Project(
         name=name,
         form_name=form_name,
         type_name=type_name,
         path=path,
         project_token=project_token,
-        delimiter=delimiter,
+        delimiter=delimiter or ',',
+        validation=validation,
         status="Ready for validation" if type_name=='file' else "Stopped",
         visible=True,
         records_chunked=0,
         records_validated=0,
         records_invalid=0
         )
+    project.save()
 
+    folder = os.path.join(config.DB_FOLDER, str(project.id), 'chunks')
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    project.chunks_folder = folder
     project.save()
 
     return project.id
