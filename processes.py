@@ -246,80 +246,77 @@ class UploadProcess(Process):
         super(UploadProcess, self).__init__(project)
 
     def runProcess(self):
-        self.count = 0
         self.project.status = "Uploading..."
-        self.calcStatus()
+        self.project.save()
 
-        for chunk in self.project.chunks:
-            if not chunk.upload_id:
-                self.uploadChunk(chunk)
-                yield
+        for _ in uploadChunks(self, self.project):
+            yield
 
-        chunks = self.getChunksToReupload()
-        if not chunks:
-            return
-
-        count = 0
-        while chunks:
-            count += 1
-            self.project.status = "Checking uploads ({}. cycle)...".format(count)
-            self.calcStatus()
-
-            for chunk in chunks:
-                self.uploadChunk(chunk)
-                yield
-
-            if count > 4:
-                self.stopProcess("Too many upload checking cycle")
-                return
-
-            chunks = self.getChunksToReupload()
-
-        self.calcStatus()
         self.markAsFinished()
-
         self.project.uploaded = True
         self.project.status = "Done"
         self.project.save()
 
-    def uploadChunk(self, chunk):
-        with zipfile.ZipFile(chunk.path, 'r') as z:
-            data = z.read('chunk.csv')
-            rows = json.loads(data)
 
-        result, error = self.post('upload_rows', {
-            'login_token': models.getLoginToken(),
-            'project_token': self.project.project_token,
-            'rows': rows
-            })
+def uploadChunks(process, project):
+    for chunk in project.chunks:
+        if not chunk.upload_id:
+            uploadChunk(process, chunk)
+            project.records_uploaded = models.getUploadedCount(project)
+            project.save()
+            yield
 
-        if error:
-            self.stopProcess(error)
+    count = 0
+    chunks = getChunksToReupload(process, project)
 
-        else:
-            self.count += len(rows)
-            chunk.uploaded = True
-            chunk.upload_id = result['upload_id']
-            chunk.save()
-            self.calcStatus()
+    while chunks:
+        count += 1
+        project.status = "Checking uploads ({}. cycle)...".format(count)
+        project.save()
 
-    def getChunksToReupload(self):
-        result, error = self.post('get_upload_ids', {
-            'login_token': models.getLoginToken(),
-            'project_token': self.project.project_token
-            })
+        for chunk in chunks:
+            uploadChunk(process, chunk)
+            yield
 
-        if error:
-            self.stopProcess(error)
+        if count > 4:
+            process.stopProcess("Too many upload checking cycle")
+            return
 
-        else:
-            upload_ids = set(result['upload_ids'])
-            return [c for c in self.project.chunks if c.upload_id not in upload_ids]
+        chunks = getChunksToReupload(process, project)
 
-    def calcStatus(self):
-        self.project.error = None
-        self.project.records_uploaded = models.getUploadedCount(self.project)
-        self.project.save()
+
+def uploadChunk(process, chunk):
+    with zipfile.ZipFile(chunk.path, 'r') as z:
+        data = z.read('chunk.csv')
+        rows = json.loads(data)
+
+    result, error = process.post('upload_rows', {
+        'login_token': models.getLoginToken(),
+        'project_token': chunk.project.project_token,
+        'rows': rows
+        })
+
+    if error:
+        process.stopProcess(error)
+
+    else:
+        chunk.uploaded = True
+        chunk.upload_id = result['upload_id']
+        chunk.save()
+
+
+def getChunksToReupload(process, project):
+    result, error = process.post('get_upload_ids', {
+        'login_token': models.getLoginToken(),
+        'project_token': project.project_token
+        })
+
+    if error:
+        process.stopProcess(error)
+
+    else:
+        upload_ids = set(result['upload_ids'])
+        return [c for c in project.chunks if c.upload_id not in upload_ids]
 
 
 # -----------------------------------------------------------------------------
@@ -344,23 +341,46 @@ class ServerProcess(Process):
         self.project.idle = False
         self.project.save()
 
-        folder = self.project.posts_folder
+        while True:
+            for _ in self.runProcessCore():
+                yield
 
-        if folder:
-            for name in sorted(os.listdir(folder)):
-                path = os.path.join(folder, name)
-                with open(path) as f:
-                    rows = json.load(f)
-
-                str_rows = [[str(v) for v in row] for row in rows]
-                for _ in processRows(self.project, self.converters, str_rows):
-                    yield
-
-                os.remove(path)
+            if not self.getPaths() and not self.project.chunks:
+                break
 
         self.project.status = "Running... (idle)"
         self.project.idle = True
         self.project.save()
+
+    def runProcessCore(self):
+        while True:
+            paths = self.getPaths()
+            if paths:
+                for _ in self.processPaths(paths):
+                    yield
+            else:
+                break
+
+        for _ in uploadChunks(self, self.project):
+            yield
+
+    def getPaths(self):
+        folder = self.project.posts_folder
+        if folder:
+            names = sorted(os.listdir(folder))
+            paths = [os.path.join(folder, name) for name in names]
+            return paths
+
+    def processPaths(self, paths):
+        for path in paths:
+            with open(path) as f:
+                rows = json.load(f)
+
+            str_rows = [[str(v) for v in row] for row in rows]
+            for _ in processRows(self.project, self.converters, str_rows):
+                yield
+
+            os.remove(path)
 
 
 # -----------------------------------------------------------------------------
