@@ -2,6 +2,7 @@
 # IMPORTS
 
 # Standard library imports
+import json
 
 # Related third party imports
 import requests
@@ -11,9 +12,23 @@ import requests
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 
+
+def get_test(project_id):
+    url = 'http://localhost:8880/{}/test'.format(project_id)
+    r = requests.get(url)
+    return r.content
+
+
+def post_data(project_id, rows):
+    data = json.dumps(rows)
+
+    url = 'http://localhost:8880/{}/post'.format(project_id)
+    r = requests.post(url, data=data)
+    return r.content
+
+
 # -----------------------------------------------------------------------------
 # MAIN
 
-r = requests.get('http://localhost:8880')
-print r.status_code
-print r.content
+print get_test(1)
+#~ print post_data(1, [{'a': 1}, {'a': 2}])

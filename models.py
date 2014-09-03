@@ -46,6 +46,7 @@ class Project(Base):
 
     status = Column(String)
     in_progress = Column(Boolean)
+    serving = Column(Boolean)
     stopped = Column(Boolean)
     error = Column(String)
 
@@ -135,6 +136,10 @@ def addProject(name, form_name, type_name, path, project_token, delimiter):
     project.save()
 
     return project.id
+
+
+def getProjectById(project_id):
+    return session.query(Project).filter(Project.id==project_id).first()
 
 
 def getProjects(visible):

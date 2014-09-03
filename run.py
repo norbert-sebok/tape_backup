@@ -802,7 +802,7 @@ sys.excepthook = excepthook.excepthook
 
 app = QtGui.QApplication(sys.argv)
 
-# Has to import after QApplication is created
+# Should import after QApplication is created
 from real_time_server import real_time_server
 real_time_url = real_time_server.startServer()
 
