@@ -336,13 +336,21 @@ class ServerProcess(Process):
 
     def runProcess(self):
         self.project.status = "Running..."
+        self.project.idle = False
         self.project.save()
 
-        for i in range(10):
-            print i
+        folder = self.project.posts_folder
+        
+        for name in os.listdir(folder):
+            path = os.path.join(folder, name)
+            self.project.status = "Processing JSON file..."
+            self.project.save()
+            import time
+            time.sleep(0.5)
             yield
 
         self.project.status = "Running... (idle)"
+        self.project.idle = True
         self.project.save()
 
 

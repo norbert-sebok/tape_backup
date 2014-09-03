@@ -78,7 +78,7 @@ def getRunningProject(name, uri):
         project = models.getProjectById(id)
         if not project:
             error = "There is no real time server with ID #{}".format(id)
-        elif not project.serving:
+        elif not project.in_progress:
             error = "Real time server #{} is stopped".format(id)
         else:
             error = None
