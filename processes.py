@@ -183,7 +183,6 @@ def processChunk(project, converters, rows):
         z.writestr('chunk.csv', json_str)
 
     project.status = "Validating and splitting..."
-    project.records_chunked += len(valid_rows)
     project.records_validated += len(valid_rows)
     project.records_invalid += len(rows) - len(valid_rows)
     project.save()

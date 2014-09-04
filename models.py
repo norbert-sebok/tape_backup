@@ -57,7 +57,6 @@ class Project(Base):
 
     records_validated = Column(Integer)
     records_invalid = Column(Integer)
-    records_chunked = Column(Integer)
     records_uploaded = Column(Integer)
 
     def save(self):
@@ -133,7 +132,6 @@ def addProject(name, form_name, type_name, path, project_token, delimiter, valid
         validation=validation,
         status="Ready for validation" if type_name=='File' else "Stopped",
         visible=True,
-        records_chunked=0,
         records_validated=0,
         records_invalid=0
         )

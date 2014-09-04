@@ -444,7 +444,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     header = [
         "ID", "Project Name", "Form name", "Type", "Status",
-        "Invalid", "Validated", "Chunked", "Uploaded", "File path or server URL"
+        "Invalid", "Validated", "Uploaded", "File path or server URL"
         ]
 
     def __init__(self):
@@ -458,12 +458,11 @@ class TableModel(QtCore.QAbstractTableModel):
     def loadRow(self, p):
         invalid = "{:,}".format(p.records_invalid or 0)
         validated = "{:,}".format(p.records_validated or 0)
-        chunked = "{:,}".format(p.records_chunked or 0)
         uploaded = "{:,}".format(p.records_uploaded or 0)
 
         return [
             p.id, p.name, p.form_name, p.type_name, p.full_status,
-            invalid, validated, chunked, uploaded, p.path or p.server_url, p
+            invalid, validated, uploaded, p.path or p.server_url, p
             ]
 
     def rowCount(self, parent):
