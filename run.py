@@ -254,8 +254,6 @@ class MainWindow(QtGui.QMainWindow):
         self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
         self.button_show.setCheckable(True)
 
-        self.button_valid = createButton(u"&Validate and split", 'accessories.png', self.onValidateClicked)
-        self.button_upload = createButton(u"&Upload", 'internet.png', self.onUploadClicked)
         self.button_open = createButton(u"&Open invalid rows", 'table.png', self.onOpenClicked)
         self.button_continue = createButton(u"&Continue", 'media-start.png', self.onContinueClicked)
         self.button_start = createButton(u"&Start", 'media-start.png', self.onStartClicked)
@@ -271,15 +269,13 @@ class MainWindow(QtGui.QMainWindow):
         self.buttons_top.addStretch()
 
         self.buttons_bottom = QtGui.QHBoxLayout()
-        self.buttons_bottom.addWidget(self.button_valid)
-        self.buttons_bottom.addWidget(self.button_upload)
         self.buttons_bottom.addSpacing(12)
-        self.buttons_bottom.addWidget(self.button_open)
-        self.buttons_bottom.addSpacing(12)
+        self.buttons_bottom.addWidget(self.button_start)
         self.buttons_bottom.addWidget(self.button_pause)
         self.buttons_bottom.addWidget(self.button_continue)
-        self.buttons_bottom.addWidget(self.button_start)
         self.buttons_bottom.addWidget(self.button_stop)
+        self.buttons_bottom.addSpacing(12)
+        self.buttons_bottom.addWidget(self.button_open)
         self.buttons_bottom.addStretch()
 
     def enableDisableButtons(self):
@@ -290,30 +286,23 @@ class MainWindow(QtGui.QMainWindow):
             self.button_open.setEnabled(bool(p.errors_file))
     
             if p.type_name=='Server':
-                self.button_valid.setEnabled(False)
-                self.button_upload.setEnabled(False)
-                self.button_continue.setVisible(False)
-                self.button_start.setVisible(True)
                 self.button_start.setEnabled(bool(not p.in_progress))
+                self.button_continue.setVisible(False)
                 self.button_pause.setVisible(False)
                 self.button_stop.setEnabled(bool(p.in_progress))
             else:
-                self.button_valid.setEnabled(bool(not p.in_progress and not p.validated))
-                self.button_upload.setEnabled(bool(not p.in_progress and p.validated and not p.uploaded))
+                self.button_start.setEnabled(bool(not p.in_progress and not p.uploaded))
                 self.button_continue.setVisible(True)
                 self.button_continue.setEnabled(bool(p.paused))
-                self.button_start.setVisible(False)
                 self.button_pause.setVisible(True)
                 self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
                 self.button_stop.setEnabled(bool(p.in_progress))
 
         else:
             self.button_hide.setEnabled(False)
-            self.button_valid.setEnabled(False)
-            self.button_upload.setEnabled(False)
             self.button_open.setEnabled(False)
+            self.button_start.setEnabled(False)
             self.button_continue.setEnabled(False)
-            self.button_start.setVisible(False)
             self.button_pause.setEnabled(False)
             self.button_stop.setEnabled(False)
 
@@ -364,30 +353,6 @@ class MainWindow(QtGui.QMainWindow):
         self.model.visible = visible
         self.reloadTable()
 
-    def onValidateClicked(self):
-        self.view.setFocus()
-
-        project = self.getCurrentProject()
-        if not project:
-            return
-
-        process = processes.ValidationAndSplitProcess(project)
-        manager.addProcess(project, process)
-        QtCore.QTimer().singleShot(10, manager.runProcesses)
-
-        self.enableDisableButtons()
-
-    def onUploadClicked(self):
-        self.view.setFocus()
-
-        project = self.getCurrentProject()
-
-        process = processes.UploadProcess(project, post)
-        manager.addProcess(project, process)
-        QtCore.QTimer().singleShot(10, manager.runProcesses)
-
-        self.enableDisableButtons()
-
     def onOpenClicked(self):
         self.view.setFocus()
 
@@ -406,7 +371,16 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setFocus()
 
         project = self.getCurrentProject()
-        process = processes.ServerProcess(project, post)
+        if not project:
+            return
+
+        if project.type_name == 'Server':
+            process = processes.ServerProcess(project, post)
+        elif not project.validated:
+            process = processes.ValidationAndSplitProcess(project)
+        else:
+            process = processes.UploadProcess(project, post)
+
         manager.addProcess(project, process)
         QtCore.QTimer().singleShot(10, manager.runProcesses)
 
