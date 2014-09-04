@@ -376,14 +376,12 @@ class MainWindow(QtGui.QMainWindow):
 
         project = self.getCurrentProject()
         manager.pauseProcess(project)
-        self.reloadTable()
 
     def onStopClicked(self):
         self.view.setFocus()
 
         project = self.getCurrentProject()
         manager.stopProcess(project)
-        self.reloadTable()
 
     def updateRow(self, project):
         count = self.getCountById(project.id)
