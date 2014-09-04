@@ -257,14 +257,15 @@ class MainWindow(QtGui.QMainWindow):
 
         self.buttons = QtGui.QHBoxLayout()
         self.buttons.addWidget(self.button_add_file)
-        self.buttons.addStretch()
+        self.buttons.addSpacing(12)
         self.buttons.addWidget(self.button_start)
         self.buttons.addWidget(self.button_pause)
         self.buttons.addWidget(self.button_stop)
         self.buttons.addWidget(self.button_hide)
-        self.buttons.addStretch()
+        self.buttons.addSpacing(12)
         self.buttons.addWidget(self.button_open)
         self.buttons.addWidget(self.button_show)
+        self.buttons.addStretch()
 
     def enableDisableButtons(self):
         p = self.getCurrentProject()
