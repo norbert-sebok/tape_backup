@@ -94,6 +94,7 @@ class Process(object):
 
     def startProcess(self):
         self.project.in_progress = True
+        self.project.error = None
         self.project.save()
 
         self.finished = False
@@ -185,7 +186,6 @@ def processChunk(project, converters, rows):
     project.records_chunked += len(valid_rows)
     project.records_validated += len(valid_rows)
     project.records_invalid += len(rows) - len(valid_rows)
-    project.error = None
     project.save()
 
     models.addOrUpdateChunk(project, path, len(valid_rows))
