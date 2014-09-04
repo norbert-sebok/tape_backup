@@ -255,10 +255,9 @@ class MainWindow(QtGui.QMainWindow):
         self.button_show.setCheckable(True)
 
         self.button_open = createButton(u"&Open invalid rows", 'table.png', self.onOpenClicked)
-        self.button_continue = createButton(u"&Continue", 'media-start.png', self.onContinueClicked)
         self.button_start = createButton(u"&Start", 'media-start.png', self.onStartClicked)
         self.button_pause = createButton(u"&Pause", 'media-pause.png', self.onPauseClicked)
-        self.button_stop = createButton(u"&Stop", 'media-stop.png', self.onStopClicked)
+        self.button_stop = createButton(u"S&top", 'media-stop.png', self.onStopClicked)
 
         self.buttons_top = QtGui.QHBoxLayout()
         self.buttons_top.addWidget(self.button_add_file)
@@ -272,7 +271,6 @@ class MainWindow(QtGui.QMainWindow):
         self.buttons_bottom.addSpacing(12)
         self.buttons_bottom.addWidget(self.button_start)
         self.buttons_bottom.addWidget(self.button_pause)
-        self.buttons_bottom.addWidget(self.button_continue)
         self.buttons_bottom.addWidget(self.button_stop)
         self.buttons_bottom.addSpacing(12)
         self.buttons_bottom.addWidget(self.button_open)
@@ -287,13 +285,10 @@ class MainWindow(QtGui.QMainWindow):
     
             if p.type_name=='Server':
                 self.button_start.setEnabled(bool(not p.in_progress))
-                self.button_continue.setVisible(False)
                 self.button_pause.setVisible(False)
                 self.button_stop.setEnabled(bool(p.in_progress))
             else:
-                self.button_start.setEnabled(bool(not p.in_progress and not p.uploaded))
-                self.button_continue.setVisible(True)
-                self.button_continue.setEnabled(bool(p.paused))
+                self.button_start.setEnabled((not p.in_progress and not p.uploaded) or p.paused)
                 self.button_pause.setVisible(True)
                 self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
                 self.button_stop.setEnabled(bool(p.in_progress))
@@ -302,7 +297,6 @@ class MainWindow(QtGui.QMainWindow):
             self.button_hide.setEnabled(False)
             self.button_open.setEnabled(False)
             self.button_start.setEnabled(False)
-            self.button_continue.setEnabled(False)
             self.button_pause.setEnabled(False)
             self.button_stop.setEnabled(False)
 
@@ -359,14 +353,6 @@ class MainWindow(QtGui.QMainWindow):
         project = self.getCurrentProject()
         startfile.startfile(project.errors_file)
 
-    def onContinueClicked(self):
-        self.view.setFocus()
-
-        project = self.getCurrentProject()
-        manager.continueProcess(project)
-        QtCore.QTimer().singleShot(10, manager.runProcesses)
-        self.reloadTable()
-
     def onStartClicked(self):
         self.view.setFocus()
 
@@ -374,16 +360,20 @@ class MainWindow(QtGui.QMainWindow):
         if not project:
             return
 
-        if project.type_name == 'Server':
-            process = processes.ServerProcess(project, post)
-        elif not project.validated:
-            process = processes.ValidationAndSplitProcess(project)
+        if project.paused:
+            manager.continueProcess(project)
+
         else:
-            process = processes.UploadProcess(project, post)
+            if project.type_name == 'Server':
+                process = processes.ServerProcess(project, post)
+            elif not project.validated:
+                process = processes.ValidationAndSplitProcess(project)
+            else:
+                process = processes.UploadProcess(project, post)
 
-        manager.addProcess(project, process)
+            manager.addProcess(project, process)
+
         QtCore.QTimer().singleShot(10, manager.runProcesses)
-
         self.enableDisableButtons()
 
     def onPauseClicked(self):
