@@ -276,12 +276,11 @@ class UploadProcess(Process):
 
 
 def uploadChunks(process, project):
-    for chunk in project.chunks:
-        if not chunk.upload_id:
-            uploadChunk(process, chunk)
-            project.records_uploaded = models.getUploadedCount(project)
-            project.save()
-            yield
+    for chunk in models.getChunksToUpload(project):
+        uploadChunk(process, chunk)
+        project.records_uploaded = models.getUploadedCount(project)
+        project.save()
+        yield
 
     count = 0
     chunks = getChunksToReupload(process, project)
@@ -362,7 +361,7 @@ class ServerProcess(Process):
             for _ in self.runProcessCore():
                 yield
 
-            if not self.getPaths() and not self.project.chunks:
+            if not self.getPaths() and not models.getChunksToUpload(self.project):
                 break
 
         self.project.status = "Running... (idle)"

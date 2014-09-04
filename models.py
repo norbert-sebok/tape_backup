@@ -201,6 +201,11 @@ def addOrUpdateChunk(project, path, rows):
     chunk.save()
 
 
+def getChunksToUpload(project):
+    query = session.query(Chunk).filter(Chunk.project==project, Chunk.upload_id==None)
+    return query.all()
+
+
 def getUploadedCount(project):
     query = session.query(func.sum(Chunk.rows))
     query = query.filter(Chunk.project==project, Chunk.uploaded==True)
