@@ -284,14 +284,13 @@ class MainWindow(QtGui.QMainWindow):
             self.button_open.setEnabled(bool(p.errors_file))
     
             if p.type_name=='Server':
-                self.button_start.setEnabled(bool(not p.in_progress))
-                self.button_pause.setVisible(False)
-                self.button_stop.setEnabled(bool(p.in_progress))
+                self.button_start.setEnabled(not p.in_progress)
+                self.button_pause.setEnabled(False)
+                self.button_stop.setEnabled(p.in_progress)
             else:
                 self.button_start.setEnabled((not p.in_progress and not p.uploaded) or p.paused)
-                self.button_pause.setVisible(True)
-                self.button_pause.setEnabled(bool(p.in_progress and not p.paused))
-                self.button_stop.setEnabled(bool(p.in_progress))
+                self.button_pause.setEnabled(p.in_progress and not p.paused)
+                self.button_stop.setEnabled(p.in_progress)
 
         else:
             self.button_hide.setEnabled(False)

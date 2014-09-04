@@ -131,9 +131,15 @@ def addProject(name, form_name, type_name, path, project_token, delimiter, valid
         delimiter=delimiter or ',',
         validation=validation,
         status="Ready for validation" if type_name=='File' else "Stopped",
-        visible=True,
         records_validated=0,
-        records_invalid=0
+        records_invalid=0,
+        visible=True,
+        in_progress=False,
+        stopped=False,
+        idle=False,
+        validated=False,
+        paused=False,
+        uploaded=False
         )
     project.save()
 
