@@ -251,9 +251,8 @@ class MainWindow(QtGui.QMainWindow):
         self.button_pause = createButton(u"&Pause", 'media-pause.png', self.onPauseClicked)
         self.button_stop = createButton(u"S&top", 'media-stop.png', self.onStopClicked)
         self.button_hide = createButton(u"&Hide...", 'edit-copy.png', self.onHideClicked)
-        self.button_open = createButton(u"&Open invalid rows", 'table.png', self.onOpenClicked)
-        self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
-        self.button_show.setCheckable(True)
+        self.button_open = createButton(u"&Open invalid rows...", 'warning.png', self.onOpenClicked)
+        self.button_filter = createButton(u"&Filter projects...", 'search.png', self.onFilterClicked)
 
         self.buttons = QtGui.QHBoxLayout()
         self.buttons.addWidget(self.button_add_file)
@@ -261,10 +260,11 @@ class MainWindow(QtGui.QMainWindow):
         self.buttons.addWidget(self.button_start)
         self.buttons.addWidget(self.button_pause)
         self.buttons.addWidget(self.button_stop)
-        self.buttons.addWidget(self.button_hide)
         self.buttons.addSpacing(12)
+        self.buttons.addWidget(self.button_hide)
         self.buttons.addWidget(self.button_open)
-        self.buttons.addWidget(self.button_show)
+        self.buttons.addSpacing(12)
+        self.buttons.addWidget(self.button_filter)
         self.buttons.addStretch()
 
     def enableDisableButtons(self):
@@ -328,19 +328,11 @@ class MainWindow(QtGui.QMainWindow):
             project.save()
             self.reloadTable()
 
-    def onShowClicked(self):
+    def onFilterClicked(self):
         self.view.setFocus()
 
-        if self.button_show.isChecked():
-            text = "&Show"
-            visible = False
-        else:
-            text = "&Hide"
-            visible = True
-
-        self.button_hide.setText(text)
-        self.model.visible = visible
-        self.reloadTable()
+        window = FilterWindow()
+        window.exec_()
 
     def onOpenClicked(self):
         self.view.setFocus()
@@ -447,6 +439,51 @@ class TableModel(QtCore.QAbstractTableModel):
     def headerData(self, col, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return self.header[col]
+
+
+class FilterWindow(QtGui.QDialog):
+
+    def __init__(self):
+        super(FilterWindow, self).__init__()
+        self.buildWidgets()
+
+    def buildWidgets(self):
+        setTitleAndIcon(self, "Filter", 'search.png')
+
+        self.button_non_hidden = QtGui.QRadioButton("Only the non-hidden projects")
+        self.button_hidden = QtGui.QRadioButton("Only the hidden projects")
+
+        if main_window.model.visible:
+            self.button_non_hidden.setChecked(True)
+        else:
+            self.button_hidden.setChecked(True)
+
+        group = QtGui.QButtonGroup(self)
+        group.addButton(self.button_non_hidden)
+        group.addButton(self.button_hidden)
+
+        button_cancel = createButton(u"Cancel", 'gtk-cancel.png', self.close)
+        button_filter = createButton(u"&Filter projects...", 'search.png', self.onFilterClicked)
+        button_filter.setDefault(True)
+
+        box_button = QtGui.QHBoxLayout()
+        box_button.addWidget(button_cancel)
+        box_button.addStretch()
+        box_button.addWidget(button_filter)
+
+        box = QtGui.QVBoxLayout()
+        box.addWidget(self.button_non_hidden)
+        box.addWidget(self.button_hidden)
+        box.addWidget(getHorizontalLine())
+        box.addLayout(box_button)
+
+        self.setLayout(box)
+
+    def onFilterClicked(self):
+        main_window.model.visible = self.button_non_hidden.isChecked()
+        main_window.reloadTable()
+
+        self.close()
 
 
 class SelectNewWindow(QtGui.QDialog):
