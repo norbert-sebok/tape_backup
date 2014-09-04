@@ -144,6 +144,7 @@ class ValidationAndSplitProcess(Process):
 
     def runProcess(self):
         self.converters = getConverters(self.project)
+        self.resetProject()
 
         with open(self.project.path) as f:
             reader = csv.reader(f, delimiter=str(self.project.delimiter))
@@ -155,6 +156,22 @@ class ValidationAndSplitProcess(Process):
         self.project.validated = True
         self.project.status = "Ready for uploading"
         self.project.save()
+
+    def resetProject(self):
+        if self.project.errors_file:
+            os.remove(self.project.errors_file)
+            self.project.errors_file = None
+
+        for name in os.listdir(self.project.chunks_folder):
+            path = os.path.join(self.project.chunks_folder, name)
+            os.remove(path)
+
+        self.project.status = "Validating and splitting..."
+        self.project.records_validated = 0
+        self.project.records_invalid = 0
+        self.project.save()
+
+        models.removeChunks(self.project)
 
 
 def processRows(project, converters, rows):

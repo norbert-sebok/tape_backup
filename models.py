@@ -191,6 +191,11 @@ def getUploadedCount(project):
     return query.scalar()
 
 
+def removeChunks(project):
+    session.query(Chunk).filter(Chunk.project==project).delete()
+    session.commit()
+
+
 # -----------------------------------------------------------------------------
 # ENGINE
 
