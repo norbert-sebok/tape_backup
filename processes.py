@@ -115,6 +115,7 @@ class Process(object):
         pass
 
     def stopProcess(self, error=None):
+        self.project.status = self.project.ready_status
         self.project.in_progress = False
         self.project.paused = False
         self.project.stopped = True
@@ -154,7 +155,7 @@ class ValidationAndSplitProcess(Process):
         self.markAsFinished()
 
         self.project.validated = True
-        self.project.status = "Ready for uploading"
+        self.project.status = self.project.ready_status
         self.project.save()
 
     def resetProject(self):

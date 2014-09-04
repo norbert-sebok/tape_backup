@@ -76,6 +76,16 @@ class Project(Base):
             return self.status
 
     @property
+    def ready_status(self):
+        if self.type_name == 'File':
+            if not self.validated:
+                return "Ready for validation"
+            else:
+                return "Ready for uploading"
+        else:
+            return "Ready to serve"
+
+    @property
     def server_url(self):
         return '{}/{}/post'.format(config.URL, self.id)
 
@@ -130,7 +140,6 @@ def addProject(name, form_name, type_name, path, project_token, delimiter, valid
         project_token=project_token,
         delimiter=delimiter or ',',
         validation=validation,
-        status="Ready for validation" if type_name=='File' else "Stopped",
         records_validated=0,
         records_invalid=0,
         visible=True,
@@ -141,6 +150,7 @@ def addProject(name, form_name, type_name, path, project_token, delimiter, valid
         paused=False,
         uploaded=False
         )
+    project.status = project.ready_status
     project.save()
 
     folder = os.path.join(config.DB_FOLDER, str(project.id), 'chunks')
