@@ -162,9 +162,8 @@ class MainWindow(QtGui.QMainWindow):
         self.createTable()
 
         layout = QtGui.QVBoxLayout()
-        layout.addLayout(self.buttons_top)
         layout.addWidget(self.view)
-        layout.addLayout(self.buttons_bottom)
+        layout.addLayout(self.buttons)
 
         central = QtGui.QWidget()
         central.setLayout(layout)
@@ -247,34 +246,25 @@ class MainWindow(QtGui.QMainWindow):
             return project
 
     def createButtons(self):
-        self.button_add_file = createButton(u"&Add file...", 'list-add.png', self.onNewFileClicked)
-        self.button_add_server = createButton(u"Add serve&r...", 'list-add.png', self.onNewServerClicked)
-        self.button_hide = createButton(u"&Hide...", 'edit-copy.png', self.onHideClicked)
-
-        self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
-        self.button_show.setCheckable(True)
-
-        self.button_open = createButton(u"&Open invalid rows", 'table.png', self.onOpenClicked)
+        self.button_add_file = createButton(u"&Add...", 'list-add.png', self.onNewClicked)
         self.button_start = createButton(u"&Start", 'media-start.png', self.onStartClicked)
         self.button_pause = createButton(u"&Pause", 'media-pause.png', self.onPauseClicked)
         self.button_stop = createButton(u"S&top", 'media-stop.png', self.onStopClicked)
+        self.button_hide = createButton(u"&Hide...", 'edit-copy.png', self.onHideClicked)
+        self.button_open = createButton(u"&Open invalid rows", 'table.png', self.onOpenClicked)
+        self.button_show = createButton(u"Show hi&dden projects", 'edit-copy-purple.png', self.onShowClicked)
+        self.button_show.setCheckable(True)
 
-        self.buttons_top = QtGui.QHBoxLayout()
-        self.buttons_top.addWidget(self.button_add_file)
-        self.buttons_top.addWidget(self.button_add_server)
-        self.buttons_top.addSpacing(12)
-        self.buttons_top.addWidget(self.button_hide)
-        self.buttons_top.addWidget(self.button_show)
-        self.buttons_top.addStretch()
-
-        self.buttons_bottom = QtGui.QHBoxLayout()
-        self.buttons_bottom.addSpacing(12)
-        self.buttons_bottom.addWidget(self.button_start)
-        self.buttons_bottom.addWidget(self.button_pause)
-        self.buttons_bottom.addWidget(self.button_stop)
-        self.buttons_bottom.addSpacing(12)
-        self.buttons_bottom.addWidget(self.button_open)
-        self.buttons_bottom.addStretch()
+        self.buttons = QtGui.QHBoxLayout()
+        self.buttons.addWidget(self.button_add_file)
+        self.buttons.addStretch()
+        self.buttons.addWidget(self.button_start)
+        self.buttons.addWidget(self.button_pause)
+        self.buttons.addWidget(self.button_stop)
+        self.buttons.addWidget(self.button_hide)
+        self.buttons.addStretch()
+        self.buttons.addWidget(self.button_open)
+        self.buttons.addWidget(self.button_show)
 
     def enableDisableButtons(self):
         p = self.getCurrentProject()
@@ -282,8 +272,8 @@ class MainWindow(QtGui.QMainWindow):
         if p:
             self.button_hide.setEnabled(bool(p))
             self.button_open.setEnabled(bool(p.errors_file))
-    
-            if p.type_name=='Server':
+
+            if p.type_name == 'Server':
                 self.button_start.setEnabled(not p.in_progress)
                 self.button_pause.setEnabled(False)
                 self.button_stop.setEnabled(p.in_progress)
@@ -293,15 +283,20 @@ class MainWindow(QtGui.QMainWindow):
                 self.button_stop.setEnabled(p.in_progress)
 
         else:
-            self.button_hide.setEnabled(False)
-            self.button_open.setEnabled(False)
             self.button_start.setEnabled(False)
             self.button_pause.setEnabled(False)
             self.button_stop.setEnabled(False)
+            self.button_hide.setEnabled(False)
+            self.button_open.setEnabled(False)
 
-    def onNewFileClicked(self):
+    def onNewClicked(self):
         self.view.setFocus()
-        self.addNew(is_server=False)
+
+        window = SelectNewWindow()
+        window.exec_()
+
+        if window.selected:
+            self.addNew(is_server=window.is_server)
 
     def onNewServerClicked(self):
         self.view.setFocus()
@@ -453,6 +448,40 @@ class TableModel(QtCore.QAbstractTableModel):
     def headerData(self, col, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return self.header[col]
+
+
+class SelectNewWindow(QtGui.QDialog):
+
+    def __init__(self):
+        super(SelectNewWindow, self).__init__()
+        self.selected = False
+        self.is_server = None
+        self.buildWidgets()
+
+    def buildWidgets(self):
+        setTitleAndIcon(self, "Add...", 'list-add.png')
+
+        button_file = createButton(u"Add new &file", 'edit-copy-purple.png', self.onFileClicked)
+        button_server = createButton(u"Add new &server", 'internet.png', self.onServerClicked)
+        button_cancel = createButton(u"Cancel", 'gtk-cancel.png', self.close)
+
+        box = QtGui.QVBoxLayout()
+        box.addWidget(button_file)
+        box.addWidget(button_server)
+        box.addSpacing(12)
+        box.addWidget(button_cancel)
+
+        self.setLayout(box)
+
+    def onFileClicked(self):
+        self.selected = True
+        self.is_server = False
+        self.close()
+
+    def onServerClicked(self):
+        self.selected = True
+        self.is_server = True
+        self.close()
 
 
 class AddNewWindow(QtGui.QDialog):
