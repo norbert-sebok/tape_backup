@@ -180,8 +180,16 @@ def getRunningProjects():
 
 
 def hasInProgress():
-    files = session.query(Project).filter(Project.type_name=='File', Project.in_progress==True).all()
-    servers = session.query(Project).filter(Project.type_name=='Server', Project.in_progress==True, Project.idle==False).all()
+    files = session.query(Project).filter(
+        Project.type_name=='File',
+        Project.in_progress==True
+        ).all()
+
+    servers = session.query(Project).filter(
+        Project.type_name=='Server',
+        Project.in_progress==True, Project.idle==False
+        ).all()
+
     return bool(files or servers)
 
 
@@ -224,6 +232,7 @@ def getUploadedCount(project):
 def removeBrokenChunks(project, json_path):
     session.query(Chunk).filter(Chunk.project==project, Chunk.json_path==json_path).delete()
     session.commit()
+
 
 def removeChunks(project):
     session.query(Chunk).filter(Chunk.project==project).delete()

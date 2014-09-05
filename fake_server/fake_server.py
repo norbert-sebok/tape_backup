@@ -4,7 +4,6 @@
 # Standard library imports
 import collections
 import json
-import random
 import uuid
 
 # Related third party imports

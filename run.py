@@ -15,7 +15,6 @@ import requests
 # Local application/library specific imports
 from utils import config
 from utils import excepthook
-from utils import startfile
 import models
 import processes
 
