@@ -11,6 +11,8 @@ And by the GUI:
 ```
 pip install pyside
 pip install requests
+pip install sqlalchemy
+pip install twisted
 
 ```
 
