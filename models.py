@@ -55,7 +55,7 @@ class Project(Base):
     paused = Column(Boolean)
     uploaded = Column(Boolean)
 
-    records_validated = Column(Integer)
+    records_valid = Column(Integer)
     records_invalid = Column(Integer)
     records_uploaded = Column(Integer)
 
@@ -98,9 +98,11 @@ class Chunk(Base):
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship("Project", backref=backref('chunks', order_by=id))
 
+    json_path = Column(String)
     path = Column(String)
-    rows = Column(Integer)
 
+    records_valid = Column(Integer)
+    records_invalid = Column(Integer)
     uploaded = Column(Boolean)
 
     def save(self):
@@ -140,7 +142,7 @@ def addProject(name, form_name, type_name, path, project_token, delimiter, valid
         project_token=project_token,
         delimiter=delimiter or ',',
         validation=validation,
-        records_validated=0,
+        records_valid=0,
         records_invalid=0,
         visible=True,
         in_progress=False,
@@ -187,19 +189,25 @@ def hasInProgress():
 # FUNCTIONS - CHUNKS
 
 
-def addOrUpdateChunk(project, path, rows):
-    chunk = session.query(Chunk).filter(Chunk.project==project, Chunk.path==path).first()
-
-    if not chunk:
-        chunk = Chunk(
-            project=project,
-            path=path,
-            rows=0,
-            uploaded=False
-            )
-
-    chunk.rows = rows
+def addChunk(project, path, json_path, records_valid, records_invalid):
+    chunk = Chunk(
+        project=project,
+        json_path=json_path,
+        path=path,
+        records_valid=records_valid,
+        records_invalid=records_invalid,
+        uploaded=False
+        )
     chunk.save()
+
+
+def updateRecordsCount(project):
+    valid = session.query(func.sum(Chunk.records_valid)).filter(Chunk.project==project).scalar()
+    invalid = session.query(func.sum(Chunk.records_invalid)).filter(Chunk.project==project).scalar()
+
+    project.records_valid = valid
+    project.records_invalid = invalid
+    project.save()
 
 
 def getChunksToUpload(project):
@@ -208,10 +216,14 @@ def getChunksToUpload(project):
 
 
 def getUploadedCount(project):
-    query = session.query(func.sum(Chunk.rows))
+    query = session.query(func.sum(Chunk.records_valid))
     query = query.filter(Chunk.project==project, Chunk.uploaded==True)
     return query.scalar()
 
+
+def removeBrokenChunks(project, json_path):
+    session.query(Chunk).filter(Chunk.project==project, Chunk.json_path==json_path).delete()
+    session.commit()
 
 def removeChunks(project):
     session.query(Chunk).filter(Chunk.project==project).delete()

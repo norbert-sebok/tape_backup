@@ -406,13 +406,13 @@ class TableModel(QtCore.QAbstractTableModel):
         self.rows = [self.loadRow(p) for p in models.getProjects(self.visible)]
 
     def loadRow(self, p):
+        valid = "{:,}".format(p.records_valid or 0)
         invalid = "{:,}".format(p.records_invalid or 0)
-        validated = "{:,}".format(p.records_validated or 0)
         uploaded = "{:,}".format(p.records_uploaded or 0)
 
         return [
             p.id, p.name, p.form_name, p.type_name, p.full_status,
-            invalid, validated, uploaded, p.path or p.server_url, p
+            invalid, valid, uploaded, p.path or p.server_url, p
             ]
 
     def rowCount(self, parent):
@@ -429,7 +429,7 @@ class TableModel(QtCore.QAbstractTableModel):
             col = index.column()
             title = self.header[col]
 
-            if title in ("Validated", "Invalid", "Chunked", "Uploaded"):
+            if title in ("Valid", "Invalid", "Chunked", "Uploaded"):
                 return int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
             else:
                 return int(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)

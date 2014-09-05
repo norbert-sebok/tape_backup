@@ -168,29 +168,32 @@ class ValidationAndSplitProcess(Process):
             os.remove(path)
 
         self.project.status = "Validating and splitting..."
-        self.project.records_validated = 0
+        self.project.records_valid = 0
         self.project.records_invalid = 0
         self.project.save()
 
         models.removeChunks(self.project)
 
 
-def processRows(project, converters, rows):
+def processRows(project, converters, rows, json_path=None):
     chunk = []
 
     for row in rows:
         chunk.append(row)
 
         if len(chunk) == config.ROWS_PER_CHUNK:
-            processChunk(project, converters, chunk)
+            processChunk(project, converters, chunk, json_path)
             chunk = []
             yield
 
     if chunk:
-        processChunk(project, converters, chunk)
+        processChunk(project, converters, chunk, json_path)
 
 
-def processChunk(project, converters, rows):
+def processChunk(project, converters, rows, json_path):
+    project.status = "Validating and splitting..."
+    project.save()
+
     name = '{:%y%m%d_%H%M%S_%f}.json.zip'.format(datetime.datetime.now())
     path = os.path.join(project.chunks_folder, name)
 
@@ -200,12 +203,11 @@ def processChunk(project, converters, rows):
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('chunk.csv', json_str)
 
-    project.status = "Validating and splitting..."
-    project.records_validated += len(valid_rows)
-    project.records_invalid += len(rows) - len(valid_rows)
-    project.save()
+    records_valid = len(valid_rows)
+    records_invalid = len(rows) - len(valid_rows)
+    models.addChunk(project, path, json_path, records_valid, records_invalid)
 
-    models.addOrUpdateChunk(project, path, len(valid_rows))
+    models.updateRecordsCount(project)
 
 
 def convertedRows(project, converters, rows):
@@ -360,8 +362,10 @@ class ServerProcess(Process):
             with open(path) as f:
                 rows = json.load(f)
 
+            models.removeBrokenChunks(self.project, path)
+
             str_rows = [[str(v) for v in row] for row in rows]
-            for _ in processRows(self.project, self.converters, str_rows):
+            for _ in processRows(self.project, self.converters, str_rows, path):
                 yield
 
             os.remove(path)
