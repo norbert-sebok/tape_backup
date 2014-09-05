@@ -282,24 +282,6 @@ def uploadChunks(process, project):
         project.save()
         yield
 
-    count = 0
-    chunks = getChunksToReupload(process, project)
-
-    while chunks:
-        count += 1
-        project.status = "Checking uploads ({}. cycle)...".format(count)
-        project.save()
-
-        for chunk in chunks:
-            uploadChunk(process, chunk)
-            yield
-
-        if count > 4:
-            process.stopProcess("Too many upload checking cycle")
-            return
-
-        chunks = getChunksToReupload(process, project)
-
 
 def uploadChunk(process, chunk):
     with zipfile.ZipFile(chunk.path, 'r') as z:
@@ -309,30 +291,16 @@ def uploadChunk(process, chunk):
     result, error = process.post('upload_rows', {
         'login_token': models.getLoginToken(),
         'project_token': chunk.project.project_token,
+        'chunk_id': chunk.id,
         'rows': rows
         })
 
-    if error:
-        process.stopProcess(error)
-
-    else:
+    if not error or error == "Already uploaded":
         chunk.uploaded = True
-        chunk.upload_id = result['upload_id']
         chunk.save()
 
-
-def getChunksToReupload(process, project):
-    result, error = process.post('get_upload_ids', {
-        'login_token': models.getLoginToken(),
-        'project_token': project.project_token
-        })
-
-    if error:
-        process.stopProcess(error)
-
     else:
-        upload_ids = set(result['upload_ids'])
-        return [c for c in project.chunks if c.upload_id not in upload_ids]
+        process.stopProcess(error)
 
 
 # -----------------------------------------------------------------------------

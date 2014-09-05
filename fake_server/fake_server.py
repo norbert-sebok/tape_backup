@@ -108,28 +108,16 @@ def get_validations():
 def upload_rows():
     login_token = flask.request.json['login_token']
     project_token = flask.request.json['project_token']
+    chunk_id = flask.request.json['chunk_id']
     rows = flask.request.json['rows']
 
     if isValidLoginToken(login_token):
-        upload_id = str(uuid.uuid4())
-        result = {'uploaded': len(rows), 'upload_id': upload_id}
+        if chunk_id in chunk_ids:
+            result = {'error': "Already uploaded"}
+        else:
+            chunk_ids.add(chunk_id)
+            result = {'chunk_id': chunk_id}
 
-        if random.random() > 0.05:
-            upload_ids[project_token].append(upload_id)
-
-    else:
-        result = {'error': "Invalid login token"}
-
-    return json.dumps(result)
-
-
-@app.route('/get_upload_ids', methods=['POST'])
-def get_upload_ids():
-    login_token = flask.request.json['login_token']
-    project_token = flask.request.json['project_token']
-
-    if isValidLoginToken(login_token):
-        result = {'upload_ids': upload_ids[project_token]}
     else:
         result = {'error': "Invalid login token"}
 
@@ -147,7 +135,7 @@ def isValidLoginToken(login_token):
 # -----------------------------------------------------------------------------
 # MAIN
 
-upload_ids = collections.defaultdict(list)
+chunk_ids = set()
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -102,7 +102,6 @@ class Chunk(Base):
     rows = Column(Integer)
 
     uploaded = Column(Boolean)
-    upload_id = Column(String)
 
     def save(self):
         session.add(self)
@@ -130,6 +129,7 @@ def setLoginToken(value):
 
 # -----------------------------------------------------------------------------
 # FUNCTIONS - PROJECT
+
 
 def addProject(name, form_name, type_name, path, project_token, delimiter, validation):
     project = Project(
@@ -195,14 +195,19 @@ def addOrUpdateChunk(project, path, rows):
     chunk = session.query(Chunk).filter(Chunk.project==project, Chunk.path==path).first()
 
     if not chunk:
-        chunk = Chunk(project=project, path=path)
+        chunk = Chunk(
+            project=project,
+            path=path,
+            rows=0,
+            uploaded=False
+            )
 
     chunk.rows = rows
     chunk.save()
 
 
 def getChunksToUpload(project):
-    query = session.query(Chunk).filter(Chunk.project==project, Chunk.upload_id==None)
+    query = session.query(Chunk).filter(Chunk.project==project, Chunk.uploaded==False)
     return query.all()
 
 
