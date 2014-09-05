@@ -338,7 +338,8 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setFocus()
 
         project = self.getCurrentProject()
-        startfile.startfile(project.errors_file)
+        w = InvalidRowsWindow(project)
+        w.exec_()
 
     def onStartClicked(self):
         self.view.setFocus()
@@ -735,7 +736,70 @@ class PreviewModel(QtCore.QAbstractTableModel):
             if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
                 return "{}. column".format(num + 1)
             elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
-                return "{}. column".format(num + 1)
+                return "{}.".format(num + 1)
+
+
+class InvalidRowsWindow(QtGui.QDialog):
+
+    def __init__(self, project):
+        super(InvalidRowsWindow, self).__init__()
+
+        self.project = project
+        self.buildWidgets()
+
+    def buildWidgets(self):
+        setTitleAndIcon(self, "Invalid rows", 'warning.png')
+        self.setMinimumWidth(800)
+        self.setMinimumHeight(500)
+
+        self.model = InvalidRowsModel(self.project)
+        self.view = QtGui.QTableView()
+        self.view.setModel(self.model)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addWidget(self.view)
+        self.setLayout(vbox)
+
+
+class InvalidRowsModel(QtCore.QAbstractTableModel):
+
+    def __init__(self, project):
+        self.project = project
+
+        self.headers = project.validation.split(',')
+        self.loadRows()
+        self.calcColumnCount()
+
+        super(InvalidRowsModel, self).__init__()
+
+    def loadRows(self):
+        with open(self.project.errors_file) as f:
+            self.rows = [
+                line.replace('\n', '').split(self.project.delimiter)
+                for line in f
+                ]
+
+    def rowCount(self, parent):
+        return len(self.rows)
+
+    def calcColumnCount(self):
+        self.column_count = len(self.headers)
+        for row in self.rows:
+            self.column_count = max(self.column_count, len(row))
+
+    def columnCount(self, parent):
+        return self.column_count
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.rows[index.row()][index.column()]
+
+    def headerData(self, num, orientation, role):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+                return self.headers[num]
+            elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+                return "{}.".format(num + 1)
 
 
 # -----------------------------------------------------------------------------
