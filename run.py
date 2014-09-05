@@ -828,6 +828,26 @@ def processJsons(project):
 
 
 # -----------------------------------------------------------------------------
+# HANDLE RUNNING PROJECTS ON START
+
+
+def handleRunningProjects():
+    for project in models.getRunningProjects():
+
+        if project.type_name == 'File':
+            project.in_progress = False
+            project.paused = False
+            project.status = project.ready_status
+            project.error = None
+            project.save()
+
+        else:
+            process = processes.ServerProcess(project, post)
+            manager.addProcess(project, process)
+            QtCore.QTimer().singleShot(10, manager.runProcesses)
+
+
+# -----------------------------------------------------------------------------
 # MAIN
 
 sys.excepthook = excepthook.excepthook
@@ -838,6 +858,8 @@ manager = processes.ProcessManager(post, app.processEvents)
 # Should import after QApplication is created
 from real_time_server import real_time_server
 real_time_url = real_time_server.startServer(processJsons)
+
+handleRunningProjects()
 
 main_window = MainWindow()
 connecting_window = ConnectingWindow()

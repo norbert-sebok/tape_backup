@@ -30,7 +30,7 @@ def post_data(project_id, rows):
 # -----------------------------------------------------------------------------
 # MAIN
 
-rows = [[i, i*10, 'lkjkhj', '2014-04-04'] for i in xrange(1000)]
+rows = [[i, i*10, 'lkjkhj', '2014-04-04'] for i in xrange(10*1000)]
 
 print get_test(2)
 print post_data(2, rows)

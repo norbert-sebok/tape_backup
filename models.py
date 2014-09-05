@@ -171,20 +171,16 @@ def getProjects(visible):
     return session.query(Project).filter(Project.visible==visible).all()
 
 
-def clearBrokenProjectsOnAppStart():
+def getRunningProjects():
     projects = session.query(Project).filter(Project.in_progress==True).all()
     projects += session.query(Project).filter(Project.paused==True).all()
-
-    for project in projects:
-        project.in_progress = False
-        project.paused = False
-        project.status = "Broken"
-        project.error = None
-        project.save()
+    return projects
 
 
 def hasInProgress():
-    return bool(session.query(Project).filter(Project.in_progress==True).all())
+    files = session.query(Project).filter(Project.type_name=='File', Project.in_progress==True).all()
+    servers = session.query(Project).filter(Project.type_name=='Server', Project.in_progress==True, Project.idle==False).all()
+    return bool(files or servers)
 
 
 # -----------------------------------------------------------------------------
@@ -239,5 +235,3 @@ Base.metadata.create_all(engine)
 
 session = sessionmaker(bind=engine)()
 project_listeners = []
-
-clearBrokenProjectsOnAppStart()
