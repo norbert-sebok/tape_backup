@@ -112,10 +112,10 @@ def upload_rows():
     rows = flask.request.json['rows']
 
     if isValidLoginToken(login_token):
-        if chunk_id in chunk_ids:
+        if chunk_id in chunk_ids[project_token]:
             result = {'error': "Already uploaded"}
         else:
-            chunk_ids.add(chunk_id)
+            chunk_ids[project_token].add(chunk_id)
             result = {'chunk_id': chunk_id}
 
     else:
@@ -135,7 +135,7 @@ def isValidLoginToken(login_token):
 # -----------------------------------------------------------------------------
 # MAIN
 
-chunk_ids = set()
+chunk_ids = collections.defaultdict(set)
 
 if __name__ == '__main__':
     app.run(debug=True)
