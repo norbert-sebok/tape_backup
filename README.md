@@ -10,7 +10,7 @@ applications (Salesforce for example).
 
 Input data is validated, chunked, converted to JSON and uploaded in chunks.
 
-![Main window](/screenshot/main.png?raw=true "Main window")
+![Main window](/screenshots/main.png?raw=true "Main window")
 
 ### Installation on Ubuntu ###
 
