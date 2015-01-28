@@ -31,7 +31,7 @@ class ConnectingWindow(QtGui.QMainWindow):
         QtCore.QTimer().singleShot(500, self.checkVersion)
 
     def buildWidgets(self):
-        setTitleAndIcon(self, "Cool name for the app", 'python.png')
+        setTitleAndIcon(self, "Tape backup", 'python.png')
 
         pixmap = QtGui.QPixmap(config.LOGO_PATH)
         label = QtGui.QLabel()
@@ -154,7 +154,7 @@ class MainWindow(QtGui.QMainWindow):
             event.accept()
 
     def buildWidgets(self):
-        setTitleAndIcon(self, "Cool name for the app", 'python.png')
+        setTitleAndIcon(self, "Tape backup", 'python.png')
         self.setSizeAndPosition(900, 600)
 
         self.createButtons()
